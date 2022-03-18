@@ -1,7 +1,7 @@
 [package]
-name = "myproject-change-this-name"
+name = "userapp"
 version = "0.1.0"
-authors = ["Put yaself here etc"]
+authors = ["peter.zingg@gmail.com"]
 edition = "2018"
 
 [lib]
@@ -20,8 +20,10 @@ log = "*"
 serde = { version = "1" }
 
 [features]
-default = ["jelly/template_watcher", "jelly/static"]
+# Not using "jelly/static", "jelly/email-postmark", etc.
+default = ["jelly/template_watcher", "jelly/email-mock"]
 production = ["jelly/production"]
+
 [dev-dependencies]
 anyhow = "1.0.42"
 dotenv = "0.15.0"

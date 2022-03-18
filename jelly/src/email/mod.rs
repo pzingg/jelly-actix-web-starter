@@ -11,6 +11,8 @@ pub mod postmark;
 pub mod sendgrid;
 #[cfg(feature = "email-smtp")]
 pub mod smtp;
+#[cfg(feature = "email-mock")]
+pub mod mock;
 
 impl Configurable for Email {
     fn check_conf() {
@@ -20,6 +22,8 @@ impl Configurable for Email {
         smtp::check_conf();
         #[cfg(feature = "email-sendgrid")]
         sendgrid::check_conf();
+        #[cfg(feature = "email-mock")]
+        mock::check_conf();
     }
 }
 
@@ -38,6 +42,10 @@ impl Email {
         #[cfg(feature = "email-smtp")]
         if res.is_err() {
             res = Email::send_via_smtp(&self);
+        }
+        #[cfg(feature = "email-mock")]
+        if res.is_err() {
+            res = Email::send_via_mock(&self);
         }
         res
     }

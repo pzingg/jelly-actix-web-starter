@@ -30,7 +30,7 @@ mod email;
 pub use email::EmailField;
 
 mod password;
-pub use password::PasswordField;
+pub use password::{PasswordConfig, PasswordField};
 
 mod slug;
 pub use slug::SlugField;

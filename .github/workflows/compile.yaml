@@ -73,5 +73,5 @@ jobs:
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
         with:
           command:  build
-          args: --features=jelly/email-postmark,jelly/email-sendgrid,jelly/email-smtp
+          args: --features=jelly/email-mock
 

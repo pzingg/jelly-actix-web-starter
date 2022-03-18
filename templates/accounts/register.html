@@ -27,12 +27,15 @@
             {{ form.email.errors }}
         {% endif %}
     </p>
-    
+
     <p>
         <label for="password">Password:</label>
         <input name="password" type="password">
         {% if form.password.errors | length > 0 %}
             {{ form.password.errors }}
+        {% endif %}
+        {% if form.password.hints | length > 0 %}
+            {{ form.password.hints }}
         {% endif %}
     </p>
 

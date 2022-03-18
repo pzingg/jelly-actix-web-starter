@@ -9,3 +9,5 @@ jelly/Cargo.lock
 **/*.rs.bk
 
 .env
+
+*.code-workspace

@@ -1,5 +1,5 @@
 # Jelly
-A.K.A, the actix-web starter you probably wish you had. This is provided as-is, and 
+A.K.A, the actix-web starter you probably wish you had. This is provided as-is, and
 anyone is free to extend it or rework it as they desire - just give some credit if
 you base a web framework off of it. :)
 
@@ -29,9 +29,9 @@ the following:
 - Flash messages
 - Async Postgres database (via SQLx)
 
-Then Jelly may be of interest to you. It's explicitly _not_ a framework; 
+Then Jelly may be of interest to you. It's explicitly _not_ a framework;
 it's modeled after Python's Django but tries to not hide the underlying
-actix-web framework too much. This is done because web frameworks 
+actix-web framework too much. This is done because web frameworks
 traditionally fall into two categories:
 
 - **The kitchen sink**: it has literally everything, and once you need to
@@ -40,7 +40,7 @@ traditionally fall into two categories:
     when you start reimplementing the kitchen sink.
 
 Jelly tries to sit in-between those two ideas; think of it as a meta-framework
-for actix-web. It helps you structure the app and spend less up-front time 
+for actix-web. It helps you structure the app and spend less up-front time
 configuring and tweaking things, and brings important ("table stakes") pieces
 to the Rust web dev experience.
 
@@ -49,15 +49,20 @@ the interesting parts.
 
 ## Getting Started
 - Clone this repository.
-- Edit `Cargo.toml` to configure your project name, as well as any other settings you need.
+- Edit `Cargo.toml` to configure your project name, as well as any
+  other settings you need, such as the jelly features, like `jelly/email-smtp`.
+  Add any jelly features to the `default` list in the `[features]` section.
 - Ensure you have Postgresql installed.
-- Install `sqlx-cli`, with: 
+- Install `sqlx-cli`, with:
 
 ```
 cargo install sqlx-cli --no-default-features --features postgres
 ```
 
-- Edit `.env.example` to use your settings.
+- Copy `.env.example` to `.env` and edit for your settings. Note:
+  the "STATIC_ROOT" variable must be set if the `jelly/static` feature
+  is enabled.
+- Create the database with `sqlx database create`.
 - Run the account migrations with `sqlx migrate run`.
 - Run the server:
 
@@ -207,7 +212,8 @@ You can call `request.queue(MyJob {...})?` to dispatch a job in the background.
 Email may be sent with the help of different drivers:
 - [postmark](https://postmarkapp.com) (enabled with feature `jelly/email-postmark`),
 - [sendgrid](https://sendgrid.com) (enabled with feature `jelly/email-sendgrid`),
-- smtp (enabled with feature `jelly/email-smtp`).
+- smtp (enabled with feature `jelly/email-smtp`),
+- mock (enabled with feature `jelly/email-mock`).
 
 You can enable several or all features, in which case all selected drivers will be tried until one success or all fails.
 

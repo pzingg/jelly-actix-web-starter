@@ -82,10 +82,10 @@ jobs:
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
         with:
           command: test
-          args: --features=jelly/email-postmark,jelly/email-sendgrid,jelly/email-smtp
+          args: --features=jelly/email-mock
 
   test-jelly:
-    name: Test Jelly 
+    name: Test Jelly
     strategy:
       matrix:
         os:
@@ -123,5 +123,5 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --features=email-postmark,email-sendgrid,email-smtp --manifest-path jelly/Cargo.toml 
+          args: --features=email-mock --manifest-path jelly/Cargo.toml
 
