@@ -7,6 +7,7 @@ extern crate log;
 
 pub mod accounts;
 pub mod dashboard;
+pub mod oauth;
 pub mod pages;
 
 use jelly::Server;
@@ -20,6 +21,7 @@ pub async fn main() -> io::Result<()> {
         .register_service(accounts::configure)
         .register_jobs(accounts::jobs::configure)
         .register_service(dashboard::configure)
+        .register_service(oauth::configure)
         .run()
         .await?
         .await

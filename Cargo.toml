@@ -1,5 +1,5 @@
 [package]
-name = "userapp"
+name = "starterapp"
 version = "0.1.0"
 authors = ["peter.zingg@gmail.com"]
 edition = "2018"
@@ -14,18 +14,19 @@ path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
+anyhow = "1.0.56"
 base64-url = "1.4.8"
 jelly = { path = "jelly" }
 log = "*"
 serde = { version = "1" }
+thiserror = "1.0.30"
 
 [features]
 # Not using "jelly/static", "jelly/email-postmark", etc.
-default = ["jelly/template_watcher", "jelly/email-mock"]
+default = ["jelly/template_watcher", "jelly/email-mock", "jelly/oauth"]
 production = ["jelly/production"]
 
 [dev-dependencies]
-anyhow = "1.0.42"
 dotenv = "0.15.0"
 env_logger = "0.9.0"
 lazy_static = "1.4.0"

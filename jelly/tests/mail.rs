@@ -1,12 +1,10 @@
 use anyhow::Result;
 use httpmock::prelude::*;
+use log::debug;
 use serde_json;
+use std::sync::{Arc, RwLock};
 use tera::Context;
 use tera::Tera;
-use std::sync::{Arc, RwLock};
-use log::debug;
-
-
 
 #[cfg(test)]
 mod send_via_sendgrid_should {
@@ -149,7 +147,7 @@ mod send_via_postmark_should {
                     "Subject": "subject line",
                     "TextBody":"test surname name",
                     "HtmlBody":"test surname name",
-                    "MessageStream":"default"} 
+                    "MessageStream":"default"}
                 ));
             resp_with
                 .status(200)

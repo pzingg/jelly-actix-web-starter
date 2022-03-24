@@ -20,6 +20,9 @@ pub use serde_json;
 pub use sqlx;
 pub use tera;
 
+#[cfg(feature = "oauth")]
+pub use oauth2;
+
 #[macro_use]
 pub extern crate log;
 
@@ -37,4 +40,12 @@ mod server;
 mod templates;
 pub use server::Server;
 
+#[cfg(feature = "oauth")]
+pub mod oauth;
+
 pub type Result<T> = std::result::Result<T, crate::error::Error>;
+
+pub const SESSION_FLASH: &str = "flsh";
+
+#[cfg(feature = "oauth")]
+pub const SESSION_OAUTH_FLOW: &str = "oflw";

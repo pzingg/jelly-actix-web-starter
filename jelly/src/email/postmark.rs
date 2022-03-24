@@ -4,8 +4,8 @@
 //!
 //! If you prefer a different provider than Postmark, you can swap the
 //! send implementation in here.
-use std::env::var;
 use anyhow::{anyhow, Context, Result};
+use std::env::var;
 
 use super::common::env_exists_and_not_empty;
 pub use super::common::Email;

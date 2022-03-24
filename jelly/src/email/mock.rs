@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::env::var;
 use std::fmt;
 
-use fancy_regex::Regex;
-use chrono::Utc;
 use anyhow::anyhow;
+use chrono::Utc;
+use fancy_regex::Regex;
 use serde_json;
 use uuid::Uuid;
 
@@ -12,11 +12,9 @@ use super::common::{env_exists_and_not_empty, Email};
 
 /// Check that all needed environment variables are set and not empty.
 pub fn check_conf() {
-    [
-        "EMAIL_DEFAULT_FROM",
-    ]
-    .iter()
-    .for_each(|env| env_exists_and_not_empty(env));
+    ["EMAIL_DEFAULT_FROM"]
+        .iter()
+        .for_each(|env| env_exists_and_not_empty(env));
 }
 
 struct MockResponse {
@@ -37,7 +35,11 @@ impl fmt::Display for MockResponse {
     }
 }
 
-fn create_response(status_code: i32, reason_phrase: &str, body: &serde_json::Value) -> MockResponse {
+fn create_response(
+    status_code: i32,
+    reason_phrase: &str,
+    body: &serde_json::Value,
+) -> MockResponse {
     let mut headers = HashMap::new();
     headers.insert("Content-Type".to_owned(), "application/json".to_owned());
 
@@ -58,20 +60,26 @@ impl Email {
             .unwrap();
         let re = Regex::new(&pattern).unwrap();
         let resp = match re.find(&self.to) {
-            Ok(_) => create_response(200, "OK",
+            Ok(_) => create_response(
+                200,
+                "OK",
                 &serde_json::json!({
                     "To": self.to,
                     "SubmittedAt": Utc::now(),
                     "MessageID": Uuid::new_v4(),
                     "ErrorCode": 406 as i32,
-                    "Message": "Address is inactive."})),
-            _ => create_response(200, "OK",
+                    "Message": "Address is inactive."}),
+            ),
+            _ => create_response(
+                200,
+                "OK",
                 &serde_json::json!({
                     "To": self.to,
                     "SubmittedAt": Utc::now(),
                     "MessageID": Uuid::new_v4(),
                     "ErrorCode": 0 as i32,
-                    "Message": "OK"})),
+                    "Message": "OK"}),
+            ),
         };
 
         if resp.status_code == 200 {

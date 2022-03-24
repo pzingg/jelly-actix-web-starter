@@ -1,18 +1,18 @@
-pub (crate) use common::Configurable;
+pub(crate) use common::Configurable;
 pub use common::Email;
 pub use tera::Context;
 
 use anyhow::anyhow;
 
-pub (crate) mod common;
+pub(crate) mod common;
+#[cfg(feature = "email-mock")]
+pub mod mock;
 #[cfg(feature = "email-postmark")]
 pub mod postmark;
 #[cfg(feature = "email-sendgrid")]
 pub mod sendgrid;
 #[cfg(feature = "email-smtp")]
 pub mod smtp;
-#[cfg(feature = "email-mock")]
-pub mod mock;
 
 impl Configurable for Email {
     fn check_conf() {
@@ -29,11 +29,11 @@ impl Configurable for Email {
 
 impl Email {
     pub fn send(self) -> Result<(), anyhow::Error> {
-       #[allow(unused_mut)]
-       let mut res = Result::Err(anyhow!("No email provider configured"));
+        #[allow(unused_mut)]
+        let mut res = Result::Err(anyhow!("No email provider configured"));
         #[cfg(feature = "email-postmark")]
         if res.is_err() {
-            res = Email::send_via_postmark(&self, "https://api.postmarkapp.com" );
+            res = Email::send_via_postmark(&self, "https://api.postmarkapp.com");
         }
         #[cfg(feature = "email-sendgrid")]
         if res.is_err() {

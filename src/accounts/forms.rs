@@ -31,7 +31,9 @@ impl Validation for NewAccountForm {
     fn is_valid(&mut self) -> bool {
         self.name.is_valid()
             && self.email.is_valid()
-            && self.password.validate_with(&[&self.name, &self.email], &PasswordConfig::default())
+            && self
+                .password
+                .validate_with(&[&self.name, &self.email], &PasswordConfig::default())
     }
 }
 
@@ -70,6 +72,9 @@ impl Validation for ChangePasswordForm {
             return false;
         }
 
-        self.password.validate_with(&[&self.name.as_ref().unwrap(), &self.email.as_ref().unwrap()], &PasswordConfig::default())
+        self.password.validate_with(
+            &[&self.name.as_ref().unwrap(), &self.email.as_ref().unwrap()],
+            &PasswordConfig::default(),
+        )
     }
 }

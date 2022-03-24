@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}Login with Google{% endblock %}
+
+{% block content %}
+<h1>Login with Google</h1>
+
+<form action="/oauth/login/" method="POST" id="loginform">
+    {% if error %}
+    <ul>
+        <li>&#9432;&nbsp; {{ error }}</li>
+    </ul>
+    {% endif %}
+
+    <p>
+        <label for="email">Email:</label>
+        <input name="email" type="email" value="{{ form.email.value }}">
+    </p>
+
+    <button type="submit">Login with Google</button>
+</form>
+{% endblock %}

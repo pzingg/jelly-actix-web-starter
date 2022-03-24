@@ -4,8 +4,8 @@
 BIND_TO="127.0.0.1:17001"
 
 # Your domain. In production this is used for secure
-# cookie handling.
-JELLY_DOMAIN="http://127.0.0.1:17001"
+# cookie handling. For OAuth, this cannot contain IP address.
+JELLY_DOMAIN="http://localhost:17001"
 
 # Your domain. In production this is used for secure
 # session handling.
@@ -34,7 +34,7 @@ POSTMARK_API_KEY="none"
 POSTMARK_MESSAGE_STREAM="outbound"
 
 
-# Your sendgrid.com API key, for sending emails. 
+# Your sendgrid.com API key, for sending emails.
 #
 # Uncomment to use.
 SENDGRID_API_KEY="none"

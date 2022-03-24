@@ -3,7 +3,28 @@
 //! error formats into the one we use for responding.
 
 use actix_web::{HttpResponse, ResponseError};
+use oauth2::{basic, reqwest};
 use std::{error, fmt};
+
+#[derive(Debug, thiserror::Error)]
+pub enum OAuthError {
+    #[error("invalid provider #{0}")]
+    RegisterProviderError(String),
+    #[error("invalid or missing verification data in session")]
+    ParseSessionError,
+    #[error("authorization was denied: #{0}")]
+    GrantAuthorizationError(String),
+    #[error("invalid callback parameters")]
+    ParseRequestError,
+    #[error("invalid callback state")]
+    VerifyStateError,
+    #[error("token request error: #{0}")]
+    GrantTokenError(#[source] basic::BasicRequestTokenError<reqwest::HttpClientError>),
+    #[error("fetch profile error: #{0}")]
+    FetchProfileError(#[source] reqwest::HttpClientError),
+    #[error("decode profile error: #{0}")]
+    DecodeProfileError(#[source] serde_json::error::Error),
+}
 
 /// This enum represents the largest classes of errors we can expect to
 /// encounter in the lifespan of our application. Feel free to add to this
@@ -21,6 +42,7 @@ pub enum Error {
     InvalidPassword,
     InvalidAccountToken,
     PasswordHasher(djangohashers::HasherError),
+    OAuth(OAuthError),
 }
 
 impl fmt::Display for Error {
@@ -42,7 +64,8 @@ impl error::Error for Error {
             Error::Generic(_)
             | Error::InvalidPassword
             | Error::InvalidAccountToken
-            | Error::PasswordHasher(_) => None,
+            | Error::PasswordHasher(_)
+            | Error::OAuth(_) => None,
         }
     }
 }
@@ -89,6 +112,12 @@ impl From<djangohashers::HasherError> for Error {
     }
 }
 
+impl From<OAuthError> for Error {
+    fn from(e: OAuthError) -> Self {
+        Error::OAuth(e)
+    }
+}
+
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::InternalServerError()
@@ -115,12 +144,12 @@ pub(crate) fn render<E: std::fmt::Debug>(e: E) -> String {
                     color: #111;
                     font-family: -apple-system, "Helvetica Neue", Helvetica, "Segoe UI", Ubuntu, arial, sans-serif;
                 }}
-                
+
                 h1 {{ margin: 0; background: #F05758; border-bottom: 1px solid #C7484A; padding: 20px; font-size: 30px; font-weight: 600; line-height: 40px; }}
-                
+
                 code {{
                     display: block;
-                    font-family: "Anonymous Pro", Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif; 
+                    font-family: "Anonymous Pro", Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
                     font-size: 16px;
                     line-height: 20px;
                     padding: 20px;
