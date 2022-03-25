@@ -10,8 +10,11 @@ pub fn configure(config: &mut ServiceConfig) {
     config.service(
         scope("/oauth/")
             .service(
+                resource("/login/{provider}")
+                    .route(get().to(views::login::form)),
+            )
+            .service(
                 resource("/login/")
-                    .route(get().to(views::login::form))
                     .route(post().to(views::login::authenticate)),
             )
             .service(

@@ -1,9 +1,9 @@
 {% extends "layout.html" %}
 
-{% block title %}Login with Google{% endblock %}
+{% block title %}Login with {{ form.provider | title }}{% endblock %}
 
 {% block content %}
-<h1>Login with Google</h1>
+<h1>Login with {{ form.provider | title }}</h1>
 
 <form action="/oauth/login/" method="POST" id="loginform">
     {% if error %}
@@ -17,6 +17,7 @@
         <input name="email" type="email" value="{{ form.email.value }}">
     </p>
 
-    <button type="submit">Login with Google</button>
+    <input name="provider" type="hidden" value="{{ form.provider }}">
+    <button type="submit">Login with {{ form.provider | title }}</button>
 </form>
 {% endblock %}

@@ -1,5 +1,5 @@
 [package]
-name = "starterapp"
+name = "rust-starterapp"
 version = "0.1.0"
 authors = ["peter.zingg@gmail.com"]
 edition = "2018"

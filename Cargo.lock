@@ -2432,6 +2432,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-starterapp"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64-url",
+ "dotenv",
+ "env_logger 0.9.0",
+ "jelly",
+ "lazy_static",
+ "log",
+ "serde",
+ "test-log",
+ "thiserror",
+]
+
+[[package]]
 name = "rustc_version"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2837,22 +2853,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e113fb6f3de07a243d434a56ec6f186dfd51cb08448239fe7bcae73f87ff28ff"
 dependencies = [
  "version_check",
-]
-
-[[package]]
-name = "starterapp"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64-url",
- "dotenv",
- "env_logger 0.9.0",
- "jelly",
- "lazy_static",
- "log",
- "serde",
- "test-log",
- "thiserror",
 ]
 
 [[package]]

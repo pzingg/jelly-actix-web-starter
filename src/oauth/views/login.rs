@@ -1,5 +1,5 @@
 use jelly::actix_session::UserSession;
-use jelly::actix_web::web::Form;
+use jelly::actix_web::web;
 use jelly::error::OAuthError;
 use jelly::oauth;
 use jelly::prelude::*;
@@ -9,21 +9,27 @@ use jelly::SESSION_OAUTH_FLOW;
 use crate::oauth::forms::LoginForm;
 
 /// The login form.
-pub async fn form(request: HttpRequest) -> Result<HttpResponse> {
+pub async fn form(request: HttpRequest, path: web::Path<String>) -> Result<HttpResponse> {
     // if request.is_authenticated()? {
     //    return request.redirect("/dashboard/");
     // }
 
+    let mut provider = path.into_inner();
+    if !oauth::client::valid_provider(&provider) {
+        provider = "google".to_string();
+    }
+    let form = LoginForm { provider: provider, ..Default::default() };
+
     request.get_session().remove(SESSION_OAUTH_FLOW);
     request.render(200, "oauth/login.html", {
         let mut ctx = Context::new();
-        ctx.insert("form", &LoginForm::default());
+        ctx.insert("form", &form);
         ctx
     })
 }
 
 /// POST-handler for logging in.
-pub async fn authenticate(request: HttpRequest, form: Form<LoginForm>) -> Result<HttpResponse> {
+pub async fn authenticate(request: HttpRequest, form: web::Form<LoginForm>) -> Result<HttpResponse> {
     // if request.is_authenticated()? {
     //    return request.redirect("/dashboard/");
     // }
@@ -42,14 +48,10 @@ pub async fn authenticate(request: HttpRequest, form: Form<LoginForm>) -> Result
 }
 
 fn request_authorization(request: HttpRequest, provider: &str, email: &str) -> Result<HttpResponse> {
-    match oauth::client_for(provider) {
+    match oauth::client::client_for(provider) {
         Some(client) => {
-            let (authorization_request, pkce_code_verifier) = oauth::client::pkce_authorization_request(
+            let (authorization_request, pkce_code_verifier) = oauth::pkce_authorization_request(
                 &client,
-                &[
-                    "https://www.googleapis.com/auth/userinfo.email",
-                    "https://www.googleapis.com/auth/userinfo.profile",
-                ],
                 Some(email),
             );
             let (authorize_url, csrf_token) = authorization_request.url();

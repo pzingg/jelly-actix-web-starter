@@ -2,7 +2,6 @@ use jelly::actix_session::{Session, UserSession};
 use jelly::actix_web::web::Query;
 use jelly::error::OAuthError;
 use jelly::oauth::{ClientFlow, OAuthFlow, UserInfo};
-use jelly::oauth2::basic::BasicClient;
 use jelly::prelude::*;
 use jelly::{oauth, Result, SESSION_OAUTH_FLOW};
 use serde::{Deserialize, Serialize};
@@ -45,7 +44,7 @@ fn validate_inputs(
             _ => match (&query.state, &query.code) {
                 (Some(state), Some(auth_code)) => {
                     if flow.csrf_token_secret == state.to_owned() {
-                        match oauth::client_for(&flow.provider_name) {
+                        match oauth::client::client_for(&flow.provider_name) {
                             Some(client) => Ok(ClientFlow {
                                 client,
                                 flow: flow.set_authorization_code(auth_code),
