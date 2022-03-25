@@ -32,8 +32,8 @@ pub async fn with_token(
             is_anonymous: false,
         })?;
 
-        return request.redirect("/dashboard/");
+        request.redirect("/dashboard/")
+    } else {
+        request.render(200, "accounts/invalid_token.html", Context::new())
     }
-
-    return request.render(200, "accounts/invalid_token.html", Context::new());
 }

@@ -43,7 +43,7 @@ fn validate_inputs(
             Some(e) => Err(OAuthError::GrantAuthorizationError(e.to_owned())),
             _ => match (&query.state, &query.code) {
                 (Some(state), Some(auth_code)) => {
-                    if flow.csrf_token_secret == state.to_owned() {
+                    if state.eq(&flow.csrf_token_secret) {
                         match oauth::client::client_for(&flow.provider_name) {
                             Some(client) => Ok(ClientFlow {
                                 client,
@@ -62,6 +62,7 @@ fn validate_inputs(
     }
 }
 
+#[allow(unused_variables)]
 fn finalize_authentication(request: HttpRequest, user_info: UserInfo) -> Result<HttpResponse> {
     // TODO set token in DB (create user if necessary)
     // TODO set user authenticated

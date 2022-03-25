@@ -3,10 +3,7 @@ use jelly::prelude::*;
 use jelly::Result;
 
 pub async fn homepage(request: HttpRequest) -> Result<HttpResponse> {
-    request.render(200, "index.html", {
-        let context = Context::new();
-        context
-    })
+    request.render(200, "index.html", Context::new())
 }
 
 pub fn configure(config: &mut ServiceConfig) {

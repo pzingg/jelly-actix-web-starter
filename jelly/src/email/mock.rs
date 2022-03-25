@@ -24,6 +24,7 @@ struct MockResponse {
     reason_phrase: String,
     /// The headers of the response. The header field names (the
     /// keys) are all lowercase.
+    #[allow(dead_code)]
     headers: HashMap<String, String>,
     body: serde_json::Value,
 }

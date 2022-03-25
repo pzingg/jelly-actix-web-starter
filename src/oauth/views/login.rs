@@ -18,7 +18,7 @@ pub async fn form(request: HttpRequest, path: web::Path<String>) -> Result<HttpR
     if !oauth::client::valid_provider(&provider) {
         provider = "google".to_string();
     }
-    let form = LoginForm { provider: provider, ..Default::default() };
+    let form = LoginForm { provider, ..Default::default() };
 
     request.get_session().remove(SESSION_OAUTH_FLOW);
     request.render(200, "oauth/login.html", {

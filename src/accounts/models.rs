@@ -53,7 +53,7 @@ impl Account {
         Ok(sqlx::query_as_unchecked!(
             Account,
             "
-            SELECT 
+            SELECT
                 id, name, email, password, profile, plan,
                 is_active, is_admin, has_verified_email,
                 last_login, created, updated
@@ -122,7 +122,7 @@ impl Account {
 
         Ok(sqlx::query!(
             "
-            INSERT INTO accounts (name, email, password) 
+            INSERT INTO accounts (name, email, password)
             VALUES ($1, $2, $3)
             RETURNING id
         ",
@@ -170,7 +170,7 @@ impl Account {
         password: &str,
         pool: &PgPool,
     ) -> Result<(), Error> {
-        let password = make_password(&password);
+        let password = make_password(password);
 
         sqlx::query!(
             "

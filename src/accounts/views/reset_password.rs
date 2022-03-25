@@ -57,17 +57,17 @@ pub async fn with_token(
     Path((uidb64, ts, token)): Path<(String, String, String)>,
 ) -> Result<HttpResponse> {
     if let Ok(_account) = validate_token(&request, &uidb64, &ts, &token).await {
-        return request.render(200, "accounts/reset_password/change_password.html", {
+        request.render(200, "accounts/reset_password/change_password.html", {
             let mut context = Context::new();
             context.insert("form", &ChangePasswordForm::default());
             context.insert("uidb64", &uidb64);
             context.insert("ts", &ts);
             context.insert("token", &token);
             context
-        });
+        })
+    } else {
+        request.render(200, "accounts/invalid_token.html", Context::new())
     }
-
-    return request.render(200, "accounts/invalid_token.html", Context::new());
 }
 
 /// Verifies the password is fine, and if so, signs the user in and redirects
@@ -109,12 +109,12 @@ pub async fn reset(
         })?;
 
         request.flash("Password Reset", "Your password was successfully reset.")?;
-        return request.redirect("/dashboard/");
+        request.redirect("/dashboard/")
+    } else {
+        request.render(200, "accounts/reset_password/change_password.html", {
+            let mut context = Context::new();
+            context.insert("form", &form);
+            context
+        })
     }
-
-    request.render(200, "accounts/reset_password/change_password.html", {
-        let mut context = Context::new();
-        context.insert("form", &form);
-        context
-    })
 }

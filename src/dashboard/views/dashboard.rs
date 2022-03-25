@@ -5,8 +5,5 @@ use jelly::Result;
 pub async fn dashboard(request: HttpRequest) -> Result<HttpResponse> {
     //let user = request.user()?;
 
-    request.render(200, "dashboard/index.html", {
-        let context = Context::new();
-        context
-    })
+    request.render(200, "dashboard/index.html", Context::new())
 }

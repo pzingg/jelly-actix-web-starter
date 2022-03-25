@@ -73,7 +73,7 @@ impl Validation for ChangePasswordForm {
         }
 
         self.password.validate_with(
-            &[&self.name.as_ref().unwrap(), &self.email.as_ref().unwrap()],
+            &[self.name.as_ref().unwrap(), self.email.as_ref().unwrap()],
             &PasswordConfig::default(),
         )
     }

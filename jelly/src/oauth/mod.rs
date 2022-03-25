@@ -5,7 +5,7 @@ use oauth2::basic::{BasicClient, BasicTokenResponse};
 use oauth2::http::header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
 use oauth2::http::method::Method;
 use oauth2::reqwest::http_client;
-use oauth2::{url, AccessToken, AuthorizationCode, AuthorizationRequest, ClientId, ClientSecret,
+use oauth2::{url, AccessToken, AuthorizationCode, AuthorizationRequest,
     CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope, TokenResponse};
 use serde::{Deserialize, Serialize};
 use serde_json;
