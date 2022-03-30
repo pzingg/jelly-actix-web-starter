@@ -15,5 +15,5 @@ pub use flash::FlashMessages;
 pub mod jobs;
 pub use jobs::JobQueue;
 
-pub mod request;
-pub use request::Render;
+pub mod render;
+pub use render::Render;

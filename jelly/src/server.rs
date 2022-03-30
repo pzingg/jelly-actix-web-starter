@@ -13,19 +13,17 @@ use crate::jobs::{JobState, DEFAULT_QUEUE};
 
 /// This struct provides a slightly simpler way to write `main.rs` in
 /// the root project, and forces more coupling to app-specific modules.
+#[derive(Default)]
 pub struct Server {
     apps: Vec<Box<dyn Fn(&mut ServiceConfig) + Send + Sync + 'static>>,
-    jobs:
-        Vec<Box<dyn Fn(WorkerConfig<JobState>) -> WorkerConfig<JobState> + Send + Sync + 'static>>,
+    #[allow(clippy::type_complexity)]
+    jobs: Vec<Box<dyn Fn(WorkerConfig<JobState>) -> WorkerConfig<JobState> + Send + Sync + 'static>>,
 }
 
 impl Server {
     /// Creates a new Server struct to configure.
     pub fn new() -> Self {
-        Self {
-            apps: vec![],
-            jobs: vec![],
-        }
+        Server::default()
     }
 
     /// Registers a service.
