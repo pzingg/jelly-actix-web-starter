@@ -1,6 +1,7 @@
 use actix_session::UserSession;
 use actix_web::HttpRequest;
 
+use crate::SESSION_USER;
 use crate::accounts::User;
 use crate::error::Error;
 
@@ -25,17 +26,17 @@ impl Authentication for HttpRequest {
     fn is_authenticated(&self) -> Result<bool, Error> {
         Ok(self
             .get_session()
-            .get::<serde_json::Value>("sku")?
+            .get::<serde_json::Value>(SESSION_USER)?
             .is_some())
     }
 
     fn set_user(&self, account: User) -> Result<(), Error> {
-        self.get_session().set("sku", account)?;
+        self.get_session().set(SESSION_USER, account)?;
         Ok(())
     }
 
     fn user(&self) -> Result<User, Error> {
-        match self.get_session().get("sku")? {
+        match self.get_session().get(SESSION_USER)? {
             Some(user) => Ok(user),
             None => Ok(User::default()),
         }

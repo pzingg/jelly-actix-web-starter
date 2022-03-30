@@ -14,6 +14,12 @@ pub struct TextField {
     pub errors: Vec<String>,
 }
 
+impl TextField {
+    pub fn new<S>(value: S) -> Self where S: Into<String> {
+        Self { value: value.into(), errors: Vec::new() }
+    }
+}
+
 impl fmt::Display for TextField {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.value)
@@ -25,10 +31,7 @@ impl<'de> Deserialize<'de> for TextField {
     where
         D: Deserializer<'de>,
     {
-        Deserialize::deserialize(deserializer).map(|t| TextField {
-            value: t,
-            errors: Vec::new(),
-        })
+        Deserialize::deserialize(deserializer).map(|t: String| TextField::new(t))
     }
 }
 

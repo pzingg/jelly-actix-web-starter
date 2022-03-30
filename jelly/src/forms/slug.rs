@@ -11,6 +11,12 @@ pub struct SlugField {
     pub errors: Vec<String>,
 }
 
+impl SlugField {
+    fn new<S>(value: S) -> Self where S: Into<String> {
+        Self { value: value.into(), errors: Vec::new() }
+    }
+}
+
 impl fmt::Display for SlugField {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.value)
@@ -22,10 +28,7 @@ impl<'de> Deserialize<'de> for SlugField {
     where
         D: Deserializer<'de>,
     {
-        Deserialize::deserialize(deserializer).map(|t| SlugField {
-            value: t,
-            errors: Vec::new(),
-        })
+        Deserialize::deserialize(deserializer).map(|t: String| SlugField::new(t))
     }
 }
 

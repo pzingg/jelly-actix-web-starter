@@ -1,26 +1,50 @@
-use jelly::forms::{EmailField, Validation};
+use jelly::forms::{EmailField, TextField, Validation};
+use jelly::oauth;
 use serde::{Deserialize, Serialize};
 
 fn default_provider() -> String {
-    "google".into()
-}
-
-fn default_redirect_path() -> String {
-    "/".into()
+    oauth::client::DEFAULT_PROVIDER.to_owned()
 }
 
 #[derive(Default, Debug, Deserialize, Serialize)]
-pub struct LoginForm {
-    pub email: EmailField,
-
+pub struct OAuthLoginForm {
     #[serde(default = "default_provider")]
     pub provider: String,
-
-    #[serde(default = "default_redirect_path")]
-    pub redirect: String,
+    pub email_hint: bool,
+    pub email: EmailField,
 }
 
-impl Validation for LoginForm {
+impl Validation for OAuthLoginForm {
+    fn is_valid(&mut self) -> bool {
+        !self.email_hint || self.email.is_valid()
+    }
+}
+
+impl OAuthLoginForm {
+    pub fn new(provider: &str) -> Self {
+        let provider = if oauth::client::valid_provider(provider) {
+            provider
+        } else {
+            oauth::client::DEFAULT_PROVIDER
+        };
+        let hints = oauth::client::provider_hints(provider);
+        OAuthLoginForm {
+            provider: provider.to_owned(),
+            email_hint: hints.map_or(false, |hint| hint.uses_email_hint),
+            email: EmailField::default()
+        }
+    }
+}
+
+#[derive(Default, Debug, Deserialize, Serialize)]
+pub struct LinkIdentityForm {
+    pub provider: String,
+    pub username: String,
+    pub name: TextField,
+    pub email: EmailField,
+}
+
+impl Validation for LinkIdentityForm {
     fn is_valid(&mut self) -> bool {
         self.email.is_valid()
     }

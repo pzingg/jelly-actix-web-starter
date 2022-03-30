@@ -21,6 +21,10 @@ pub fn configure(config: &mut ServiceConfig) {
                 resource("/callback/")
                     .name("oauth-callback")
                     .route(get().to(views::authorize::exchange_code_for_token)),
+            )
+            .service(
+                resource("/confirm/")
+                    .route(post().to(views::authorize::confirm_identity)),
             ),
     );
 }

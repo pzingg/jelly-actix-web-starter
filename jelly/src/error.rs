@@ -39,9 +39,9 @@ pub enum Error {
     Template(tera::Error),
     Json(serde_json::error::Error),
     Radix(radix::RadixErr),
+    NoPasswordForAccount,
     InvalidPassword,
     InvalidAccountToken,
-    PasswordHasher(djangohashers::HasherError),
     OAuth(OAuthError),
 }
 
@@ -62,9 +62,9 @@ impl error::Error for Error {
             Error::Radix(e) => Some(e),
 
             Error::Generic(_)
+            | Error::NoPasswordForAccount
             | Error::InvalidPassword
             | Error::InvalidAccountToken
-            | Error::PasswordHasher(_)
             | Error::OAuth(_) => None,
         }
     }
@@ -107,8 +107,8 @@ impl From<radix::RadixErr> for Error {
 }
 
 impl From<djangohashers::HasherError> for Error {
-    fn from(e: djangohashers::HasherError) -> Self {
-        Error::PasswordHasher(e)
+    fn from(_e: djangohashers::HasherError) -> Self {
+        Error::InvalidPassword
     }
 }
 

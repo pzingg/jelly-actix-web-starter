@@ -45,7 +45,10 @@ pub mod oauth;
 
 pub type Result<T> = std::result::Result<T, crate::error::Error>;
 
+pub const NO_PASSWORD: Option<String> = None;
 pub const SESSION_FLASH: &str = "flsh";
+pub const SESSION_USER: &str = "sku";
 
 #[cfg(feature = "oauth")]
 pub const SESSION_OAUTH_FLOW: &str = "oflw";
+pub const SESSION_OAUTH_TOKEN: &str = "rfsh";

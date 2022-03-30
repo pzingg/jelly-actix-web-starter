@@ -17,6 +17,10 @@ pub struct PasswordField {
 }
 
 impl PasswordField {
+    pub fn new<S>(value: S) -> Self where S: Into<String> {
+        Self { value: value.into(), errors: Vec::new(), hints: Vec::new() }
+    }
+
     pub fn validate_with(&mut self, user_inputs: &[&str], cfg: &PasswordConfig) -> bool {
         let length_valid = match &cfg.length {
             Some(length) => {
@@ -106,11 +110,7 @@ impl<'de> Deserialize<'de> for PasswordField {
     where
         D: Deserializer<'de>,
     {
-        Deserialize::deserialize(deserializer).map(|t| PasswordField {
-            value: t,
-            errors: Vec::new(),
-            hints: Vec::new(),
-        })
+        Deserialize::deserialize(deserializer).map(|t: String| PasswordField::new(t))
     }
 }
 

@@ -3,7 +3,7 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<h1>Login</h1>
+<h1>Login with password</h1>
 
 <form action="/accounts/login/" method="POST" id="loginform">
     {% if error %}
@@ -16,7 +16,7 @@
         <label for="email">Email:</label>
         <input name="email" type="email" value="{{ form.email.value }}">
     </p>
-    
+
     <p>
         <label for="password">Password:</label>
         <input name="password" type="password">
@@ -25,4 +25,10 @@
 
     <button type="submit">Login</button>
 </form>
+
+<div>Or</div>
+
+<div><a class="button" type="button" href="/oauth/login/google">Login with Google</a></div>
+<div><a class="button" type="button" href="/oauth/login/github">Login with Github</a></div>
+
 {% endblock %}

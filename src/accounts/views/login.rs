@@ -1,4 +1,4 @@
-use jelly::actix_web::{web::Form, HttpRequest};
+use jelly::actix_web::{web, HttpRequest};
 use jelly::prelude::*;
 use jelly::request::{Authentication, DatabasePool};
 use jelly::Result;
@@ -20,7 +20,10 @@ pub async fn form(request: HttpRequest) -> Result<HttpResponse> {
 }
 
 /// POST-handler for logging in.
-pub async fn authenticate(request: HttpRequest, form: Form<LoginForm>) -> Result<HttpResponse> {
+pub async fn authenticate(
+    request: HttpRequest,
+    form: web::Form<LoginForm>,
+) -> Result<HttpResponse> {
     if request.is_authenticated()? {
         return request.redirect("/dashboard/");
     }

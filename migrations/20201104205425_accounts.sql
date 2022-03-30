@@ -1,4 +1,4 @@
--- Creates a accounts table, along with some associated helpers.
+-- Creates an accounts table, along with some associated helpers.
 
 create or replace function update_timestamp() returns trigger as $$
 begin
@@ -11,7 +11,7 @@ create table if not exists accounts (
     id serial primary key,
     name text not null,
     email text not null unique,
-    password text not null,
+    password text,
     profile jsonb not null default '{}',
     plan integer not null default 0,
     is_active boolean not null default true,
@@ -24,5 +24,5 @@ create table if not exists accounts (
 
 create unique index accounts_unique_lower_email_idx on accounts (lower(email));
 
-create trigger user_updated before insert or update on accounts
+create trigger account_updated before insert or update on accounts
 for each row execute procedure update_timestamp();

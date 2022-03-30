@@ -1,4 +1,4 @@
-use jelly::actix_web::{web::Form, HttpRequest};
+use jelly::actix_web::{web, HttpRequest};
 use jelly::prelude::*;
 use jelly::request::{Authentication, DatabasePool};
 use jelly::Result;
@@ -21,7 +21,7 @@ pub async fn form(request: HttpRequest) -> Result<HttpResponse> {
 
 pub async fn create_account(
     request: HttpRequest,
-    form: Form<NewAccountForm>,
+    form: web::Form<NewAccountForm>,
 ) -> Result<HttpResponse> {
     if request.is_authenticated()? {
         return request.redirect("/dashboard/");

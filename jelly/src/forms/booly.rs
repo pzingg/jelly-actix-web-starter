@@ -14,6 +14,12 @@ pub struct BoolField {
     pub errors: Vec<String>,
 }
 
+impl BoolField {
+    pub fn new(value: bool) -> Self {
+        Self { value: value, errors: Vec::new() }
+    }
+}
+
 impl fmt::Display for BoolField {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.value)
@@ -25,10 +31,7 @@ impl<'de> Deserialize<'de> for BoolField {
     where
         D: Deserializer<'de>,
     {
-        Deserialize::deserialize(deserializer).map(|t| BoolField {
-            value: t,
-            errors: Vec::new(),
-        })
+        Deserialize::deserialize(deserializer).map(|t: bool| BoolField::new(t))
     }
 }
 
@@ -41,12 +44,5 @@ impl Deref for BoolField {
 }
 
 impl Validation for BoolField {
-    fn is_valid(&mut self) -> bool {
-        if !self.value {
-            self.errors.push("Bad boolean value?".to_string());
-            return false;
-        }
-
-        true
-    }
+    fn is_valid(&mut self) -> bool { true }
 }
