@@ -10,10 +10,11 @@ const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
 /// Generates a random password and returns it hashed.
 pub fn make_random_password() -> String {
     let mut rng = thread_rng();
+    let len = CHARSET.len();
 
     let password: String = (0..PASSWORD_LEN)
         .map(|_| {
-            let idx = rng.gen_range(0..CHARSET.len());
+            let idx = rng.gen_range(0, len);
             CHARSET[idx] as char
         })
         .collect();

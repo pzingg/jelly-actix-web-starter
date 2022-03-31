@@ -1,6 +1,6 @@
 [package]
 name = "rust-starterapp"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["peter.zingg@gmail.com"]
 edition = "2018"
 
@@ -18,7 +18,7 @@ anyhow = "1.0.56"
 base64-url = "1.4.8"
 jelly = { path = "jelly" }
 log = "*"
-serde = { version = "1" }
+serde = "1.0"
 thiserror = "1.0.30"
 
 [features]
