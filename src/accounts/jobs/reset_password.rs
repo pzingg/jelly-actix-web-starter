@@ -75,6 +75,7 @@ impl Job for SendPasswordWasResetEmail {
 
     fn run(self, state: JobState) -> Self::Future {
         Box::pin(async move {
+            let _ = &state;
             let email = Email::new(
                 "email/password-was-reset",
                 &[self.to],
