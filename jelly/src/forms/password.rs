@@ -17,8 +17,12 @@ pub struct PasswordField {
 }
 
 impl PasswordField {
+    pub fn from_string(value: String) -> Self {
+        Self { value, ..Self::default() }
+    }
+
     pub fn new<S>(value: S) -> Self where S: Into<String> {
-        Self { value: value.into(), errors: Vec::new(), hints: Vec::new() }
+        Self::from_string(value.into())
     }
 
     pub fn validate_with(&mut self, user_inputs: &[&str], cfg: &PasswordConfig) -> bool {
@@ -42,7 +46,7 @@ impl PasswordField {
     pub fn validate_length(&mut self, min_length: usize, max_length: usize) -> bool {
         match self.value.len() {
             0 => {
-                self.errors.push("Password cannot be blank.".to_owned());
+                self.errors.push("Password cannot be blank.".to_string());
                 false
             }
             x if x < min_length => {
@@ -67,7 +71,7 @@ impl PasswordField {
         if regex.is_match(&self.value).unwrap() {
             true
         } else {
-            self.errors.push(message.to_owned());
+            self.errors.push(message.to_string());
             false
         }
     }
@@ -85,7 +89,7 @@ impl PasswordField {
                     self.errors.push(format!("{}", warning));
                 } else {
                     self.errors
-                        .push(format!("{}", "Password not strong enough."));
+                        .push("Password not strong enough.".to_string());
                 }
 
                 self.hints = feedback
@@ -99,6 +103,10 @@ impl PasswordField {
     }
 }
 
+impl From<String> for PasswordField {
+    fn from(value: String) -> Self { Self::from_string(value) }
+}
+
 impl fmt::Display for PasswordField {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.value)
@@ -110,7 +118,7 @@ impl<'de> Deserialize<'de> for PasswordField {
     where
         D: Deserializer<'de>,
     {
-        Deserialize::deserialize(deserializer).map(|t: String| PasswordField::new(t))
+        Deserialize::deserialize(deserializer).map(PasswordField::from_string)
     }
 }
 
@@ -138,7 +146,7 @@ impl RegexConfig {
     fn new(pattern: &str, message: &str) -> Self {
         RegexConfig {
             regex: Regex::new(pattern).unwrap(),
-            message: message.to_owned(),
+            message: message.to_string(),
         }
     }
 }

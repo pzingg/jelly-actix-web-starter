@@ -46,7 +46,7 @@ impl UserPass {
         self.password
             .as_ref()
             .ok_or(Error::NoPasswordForAccount)
-            .and_then(|encoded| hasher::check_password(password, &encoded).map_err(|e| e.into()))
+            .and_then(|encoded| hasher::check_password(password, encoded).map_err(|e| e.into()))
     }
 }
 
@@ -345,7 +345,7 @@ impl Account {
                     })
                 } else {
                     Err(Error::Generic(
-                        "The provider account is linked to a different account".to_owned(),
+                        "The provider account is linked to a different account".to_string(),
                     ))
                 }
             }

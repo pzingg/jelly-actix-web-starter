@@ -85,7 +85,7 @@ fn validate_inputs(
 
     match maybe_flow {
         Ok(Some(flow)) => match &query.error {
-            Some(e) => Err(OAuthError::GrantAuthorizationError(e.to_owned())),
+            Some(e) => Err(OAuthError::GrantAuthorizationError(e.to_string())),
             _ => match (&query.state, &query.code) {
                 (Some(state), Some(auth_code)) => {
                     if state.eq(&flow.csrf_token_secret) {
@@ -109,7 +109,7 @@ fn validate_inputs(
 
 fn finalize_authentication(request: HttpRequest, user_info: UserInfo) -> Result<HttpResponse> {
     let form = LinkIdentityForm {
-        provider: user_info.provider.to_owned(),
+        provider: user_info.provider.to_string(),
         username: user_info.username,
         name: TextField::new(user_info.name),
         email: EmailField::new(user_info.login_email),

@@ -1,4 +1,4 @@
-use jelly::jobs::{JobState, WorkerConfig};
+use jelly::jobs::JobConfig;
 
 mod verify;
 pub use verify::build_context as build_verify_context;
@@ -16,7 +16,7 @@ mod odd_registration_attempt;
 pub use odd_registration_attempt::build_context as build_odd_registration_attempt_context;
 pub use odd_registration_attempt::SendAccountOddRegisterAttemptEmail;
 
-pub fn configure(config: WorkerConfig<JobState>) -> WorkerConfig<JobState> {
+pub fn configure(config: JobConfig) -> JobConfig {
     let mut config = config.register::<SendResetPasswordEmail>();
     config = config.register::<SendPasswordWasResetEmail>();
     config = config.register::<SendWelcomeAccountEmail>();

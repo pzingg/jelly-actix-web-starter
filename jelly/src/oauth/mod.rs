@@ -1,6 +1,5 @@
 //! URL dispatcher for oauth related API endpoints.
 
-use std::marker::Copy;
 use std::{result, str};
 
 use oauth2::basic::{BasicClient, BasicTokenResponse};
@@ -21,6 +20,22 @@ use actix_session::Session;
 pub mod client;
 
 #[derive(Debug, Deserialize, Serialize)]
+pub struct OAuthFlow {
+    pub provider: String,
+    pub email: String,
+    pub authorization_code: String,
+    pub csrf_token_secret: String,
+    pub pkce_verifier_secret: String,
+}
+
+impl OAuthFlow {
+    pub fn set_authorization_code(mut self, code: &str) -> Self {
+        self.authorization_code = code.to_string();
+        self
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct UserInfo {
     pub provider: &'static str,
     pub id: String,
@@ -34,18 +49,12 @@ pub struct UserInfo {
 // the authorization with.
 type UserInfoDeserializer = fn(&str, &str) -> serde_json::Result<UserInfo>;
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct OAuthFlow {
-    pub provider: String,
-    pub email: String,
-    pub authorization_code: String,
-    pub csrf_token_secret: String,
-    pub pkce_verifier_secret: String,
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-pub struct ProviderHints {
-    pub uses_email_hint: bool,
+#[derive(Clone)]
+pub struct UserInfoRequest {
+    pub uri: String,
+    pub params: Vec<(String, String)>,
+    pub headers: Vec<(Vec<u8>, String)>,
+    pub deserializer: UserInfoDeserializer,
 }
 
 #[derive(Clone)]
@@ -53,10 +62,7 @@ pub struct ScopedClient {
     pub inner: BasicClient,
     pub scopes: Vec<String>,
     pub login_hint_key: Option<String>,
-    pub user_info_uri: String,
-    pub user_info_params: Vec<(String, String)>,
-    pub user_info_headers: Vec<(Vec<u8>, String)>,
-    pub user_info_de: UserInfoDeserializer,
+    pub user_info_request: UserInfoRequest,
 }
 
 pub struct ClientFlow {
@@ -68,16 +74,19 @@ pub struct TokenInfo {
     pub provider: String,
     pub email: String,
     pub response: BasicTokenResponse,
-    pub user_info_uri: String,
-    pub user_info_params: Vec<(String, String)>,
-    pub user_info_headers: Vec<(Vec<u8>, String)>,
-    pub user_info_de: UserInfoDeserializer,
+    pub user_info_request: UserInfoRequest,
 }
 
-impl OAuthFlow {
-    pub fn set_authorization_code(mut self, code: &str) -> Self {
-        self.authorization_code = code.to_owned();
-        self
+impl TokenInfo {
+    pub fn parse_user_info_response(
+        &self,
+        response: &oauth2::HttpResponse,
+    ) -> Result<UserInfo, OAuthError> {
+        let body = str::from_utf8(response.body.as_slice()).unwrap();
+        // info!("got user_info body: {}", body);
+
+        let deser = self.user_info_request.deserializer;
+        deser(body, &self.email).map_err(OAuthError::DecodeProfileError)
     }
 }
 
@@ -121,15 +130,12 @@ pub fn request_token(client_flow: ClientFlow) -> result::Result<TokenInfo, OAuth
     client
         .request(http_client)
         .map(move |response| TokenInfo {
-            provider: client_flow.flow.provider,
-            email: client_flow.flow.email.clone(),
             response,
-            user_info_uri: client_flow.client.user_info_uri.clone(),
-            user_info_params: client_flow.client.user_info_params.clone(),
-            user_info_headers: client_flow.client.user_info_headers.clone(),
-            user_info_de: client_flow.client.user_info_de,
+            provider: client_flow.flow.provider,
+            email: client_flow.flow.email,
+            user_info_request: client_flow.client.user_info_request,
         })
-        .map_err(|e| OAuthError::GrantTokenError(e).into())
+        .map_err(OAuthError::GrantTokenError)
 }
 
 pub fn fetch_user_info(
@@ -143,30 +149,16 @@ pub fn fetch_user_info(
         session.set(SESSION_OAUTH_TOKEN, refresh_token)?;
     }
 
-    let scope_request = get_user_info_request(
-        access_token,
-        &token_info.user_info_uri,
-        &token_info.user_info_params,
-        &token_info.user_info_headers,
-    );
-    match http_client(scope_request) {
-        Ok(scope_response) => {
-            let response_body = str::from_utf8(scope_response.body.as_slice()).unwrap();
-            // info!("got user_info body: {}", response_body);
-
-            let deserialize_and_map = token_info.user_info_de;
-            deserialize_and_map(response_body, &token_info.email)
-                .map_err(|e| Error::OAuth(OAuthError::DecodeProfileError(e)))
-        }
-        Err(e) => Err(Error::OAuth(OAuthError::FetchProfileError(e))),
-    }
+    let user_info_request = get_user_info_request(access_token, &token_info.user_info_request);
+    http_client(user_info_request)
+        .map_err(OAuthError::FetchProfileError)
+        .and_then(|response| token_info.parse_user_info_response(&response))
+        .map_err(Error::OAuth)
 }
 
 fn get_user_info_request<'a>(
     access_token: &'a AccessToken,
-    endpoint_uri: &'a str,
-    extra_params: &[(String, String)],
-    extra_headers: &[(Vec<u8>, String)],
+    fetcher: &'a UserInfoRequest,
 ) -> oauth2::HttpRequest {
     let token_value = access_token.secret();
 
@@ -179,7 +171,7 @@ fn get_user_info_request<'a>(
         AUTHORIZATION,
         HeaderValue::from_str(&format!("Bearer {}", token_value)).unwrap(),
     );
-    for (key, value) in extra_headers {
+    for (key, value) in fetcher.headers.iter() {
         headers.append(
             HeaderName::from_bytes(key).unwrap(),
             HeaderValue::from_str(value).unwrap(),
@@ -187,7 +179,8 @@ fn get_user_info_request<'a>(
     }
 
     let body: Vec<u8> = vec![];
-    let url = url::Url::parse_with_params(endpoint_uri, extra_params).unwrap();
+    let url = url::Url::parse_with_params(&fetcher.uri, fetcher.params.iter()).unwrap();
+
     oauth2::HttpRequest {
         method: Method::GET,
         url,

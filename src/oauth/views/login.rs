@@ -59,8 +59,8 @@ fn request_authorization(
                 oauth::pkce_authorization_request(&client, Some(email));
             let (authorize_url, csrf_token) = authorization_request.url();
             let flow = oauth::OAuthFlow {
-                provider: provider.to_owned(),
-                email: email.to_owned(),
+                provider: provider.to_string(),
+                email: email.to_string(),
                 authorization_code: String::new(),
                 csrf_token_secret: csrf_token.secret().into(),
                 pkce_verifier_secret: pkce_code_verifier.secret().into(),
@@ -69,6 +69,6 @@ fn request_authorization(
             request.get_session().set(SESSION_OAUTH_FLOW, flow)?;
             request.redirect(&authorize_url.to_string())
         }
-        _ => Err(OAuthError::RegisterProviderError(provider.to_owned()).into()),
+        _ => Err(OAuthError::RegisterProviderError(provider.to_string()).into()),
     }
 }

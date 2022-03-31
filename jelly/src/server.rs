@@ -9,15 +9,14 @@ use background_jobs::{create_server, WorkerConfig};
 use sqlx::postgres::PgPoolOptions;
 
 use crate::email::{Configurable, Email};
-use crate::jobs::{JobState, DEFAULT_QUEUE};
+use crate::jobs::{JobConfig, JobState, DEFAULT_QUEUE};
 
 /// This struct provides a slightly simpler way to write `main.rs` in
 /// the root project, and forces more coupling to app-specific modules.
 #[derive(Default)]
 pub struct Server {
     apps: Vec<Box<dyn Fn(&mut ServiceConfig) + Send + Sync + 'static>>,
-    #[allow(clippy::type_complexity)]
-    jobs: Vec<Box<dyn Fn(WorkerConfig<JobState>) -> WorkerConfig<JobState> + Send + Sync + 'static>>,
+    jobs: Vec<Box<dyn Fn(JobConfig) -> JobConfig + Send + Sync + 'static>>,
 }
 
 impl Server {
@@ -38,7 +37,7 @@ impl Server {
     /// Registers jobs.
     pub fn register_jobs<F>(mut self, handler: F) -> Self
     where
-        F: Fn(WorkerConfig<JobState>) -> WorkerConfig<JobState> + Send + Sync + 'static,
+        F: Fn(JobConfig) -> JobConfig + Send + Sync + 'static,
     {
         self.jobs.push(Box::new(handler));
         self
@@ -115,15 +114,14 @@ impl Server {
             let mut worker_config = WorkerConfig::new(move || state.clone());
 
             for handler in jobs.iter() {
-                let x = handler.clone();
-                worker_config = x(worker_config);
+                worker_config = (*handler)(worker_config);
             }
 
             worker_config
                 .set_worker_count(DEFAULT_QUEUE, 16)
                 .start(queue.clone());
 
-            app.app_data(web::Data::new(queue.clone()))
+            app.app_data(web::Data::new(queue))
         })
         .backlog(8192)
         .shutdown_timeout(0)

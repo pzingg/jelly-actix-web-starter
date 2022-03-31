@@ -16,7 +16,7 @@ pub trait Configurable {
 
 /// Check that environment variable exists and is not empty else panic.
 pub fn env_exists_and_not_empty(env: &str) {
-    if var(env).expect(&format!("{} not set!", env)).is_empty() {
+    if var(env).unwrap_or_else(|_| panic!("{} not set!", env)).is_empty() {
         panic!("{} is empty", env)
     }
 }
@@ -81,10 +81,10 @@ impl Email {
         debug!("Context for template {} : {:?}", template_name, &context);
 
         let body_html = engine
-            .render(&(template_name.to_owned() + ".html"), &context)
+            .render(&(template_name.to_string() + ".html"), &context)
             .map_err(Error::msg)?;
         let body = engine
-            .render(&(template_name.to_owned() + ".txt"), &context)
+            .render(&(template_name.to_string() + ".txt"), &context)
             .map_err(Error::msg)?;
 
         Ok(Email {

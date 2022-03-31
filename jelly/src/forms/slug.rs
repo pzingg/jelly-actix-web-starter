@@ -11,10 +11,19 @@ pub struct SlugField {
     pub errors: Vec<String>,
 }
 
+
 impl SlugField {
-    fn new<S>(value: S) -> Self where S: Into<String> {
-        Self { value: value.into(), errors: Vec::new() }
+    pub fn from_string(value: String) -> Self {
+        Self { value, ..Self::default() }
     }
+
+    pub fn new<S>(value: S) -> Self where S: Into<String> {
+        Self::from_string(value.into())
+    }
+}
+
+impl From<String> for SlugField {
+    fn from(value: String) -> Self { Self::from_string(value) }
 }
 
 impl fmt::Display for SlugField {
@@ -28,7 +37,7 @@ impl<'de> Deserialize<'de> for SlugField {
     where
         D: Deserializer<'de>,
     {
-        Deserialize::deserialize(deserializer).map(|t: String| SlugField::new(t))
+        Deserialize::deserialize(deserializer).map(SlugField::from_string)
     }
 }
 
@@ -42,14 +51,14 @@ impl Deref for SlugField {
 
 impl Validation for SlugField {
     fn is_valid(&mut self) -> bool {
-        if self.value == "" {
+        if self.value.is_empty() {
             self.errors.push("Slugs cannot be blank!".to_string());
         }
 
-        if self.value.contains(" ") {
+        if self.value.contains(' ') {
             self.errors.push("Slugs can't contain spaces.".to_string());
         }
 
-        self.errors.len() == 0
+        self.errors.is_empty()
     }
 }

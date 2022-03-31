@@ -7,21 +7,13 @@ use std::collections::HashMap;
 use std::env;
 use std::sync::{Arc, Mutex};
 
-use crate::oauth::{ProviderHints, ScopedClient, UserInfo, UserInfoDeserializer};
+use crate::oauth::{ScopedClient, UserInfo, UserInfoDeserializer, UserInfoRequest};
 
-struct ClientConfig<'a> {
-    redirect_uri: &'a str,
-    client_id_env: &'a str,
-    client_secret_env: Option<&'a str>,
-    auth_url: &'a str,
-    token_url: &'a str,
-    revoke_url: Option<&'a str>,
-    scopes: &'a [&'a str],
-    login_hint_key: Option<&'a str>,
-    user_info_uri: &'a str,
-    user_info_params: &'a [(&'a str, &'a str)],
-    user_info_headers: &'a [(&'a [u8], &'a str)],
-    user_info_de: UserInfoDeserializer,
+pub const DEFAULT_PROVIDER: &str = "google";
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+pub struct ProviderHints {
+    pub uses_email_hint: bool,
 }
 
 type HintMap = HashMap<&'static str, ProviderHints>;
@@ -31,16 +23,6 @@ type ClientMap = HashMap<String, Option<ScopedClient>>;
 lazy_static! {
     static ref LOGIN_HINTS: Arc<Mutex<HintMap>> = Arc::new(Mutex::new(build_hints()));
     static ref CLIENTS: Arc<Mutex<ClientMap>> = Arc::new(Mutex::new(HashMap::new()));
-}
-
-pub const DEFAULT_PROVIDER: &str = "google";
-
-pub fn valid_provider(provider: &str) -> bool {
-    LOGIN_HINTS.lock().unwrap().contains_key(provider)
-}
-
-pub fn provider_hints(provider: &str) -> Option<ProviderHints> {
-    LOGIN_HINTS.lock().unwrap().get(provider).copied()
 }
 
 fn build_hints() -> HintMap {
@@ -66,6 +48,14 @@ fn build_hints() -> HintMap {
     hints
 }
 
+pub fn valid_provider(provider: &str) -> bool {
+    LOGIN_HINTS.lock().unwrap().contains_key(provider)
+}
+
+pub fn provider_hints(provider: &str) -> Option<ProviderHints> {
+    LOGIN_HINTS.lock().unwrap().get(provider).copied()
+}
+
 // TODO is there a better return value than client.clone() ?
 pub fn client_for(provider: &str) -> Option<ScopedClient> {
     if valid_provider(provider) {
@@ -77,7 +67,7 @@ pub fn client_for(provider: &str) -> Option<ScopedClient> {
             // and it must be registered with the OAuth provider.
             let redirect_uri = format!("{}/oauth/callback/", root_domain);
             let client = build_client(provider, &redirect_uri);
-            provider_map.insert(provider.to_owned(), client);
+            provider_map.insert(provider.to_string(), client);
         }
         match provider_map.get(provider) {
             Some(Some(client)) => Some(client.clone()),
@@ -86,6 +76,45 @@ pub fn client_for(provider: &str) -> Option<ScopedClient> {
     } else {
         None
     }
+}
+
+struct ClientConfig<'a> {
+    redirect_uri: &'a str,
+    client_id_env: &'a str,
+    client_secret_env: Option<&'a str>,
+    auth_url: &'a str,
+    token_url: &'a str,
+    revoke_url: Option<&'a str>,
+    scopes: &'a [&'a str],
+    login_hint_key: Option<&'a str>,
+    user_info_uri: &'a str,
+    user_info_params: &'a [(&'a str, &'a str)],
+    user_info_headers: &'a [(&'a [u8], &'a str)],
+    user_info_deserializer: UserInfoDeserializer,
+}
+
+pub fn parse_user_info<'de, T: Deserialize<'de> + Into<UserInfo>>(
+    json_body: &'de str,
+    email: &str,
+) -> serde_json::Result<UserInfo> {
+    serde_json::from_str::<'de, T>(json_body)
+        .map(|obj| obj.into())
+        .map(|ui| UserInfo {
+            login_email: email.to_string(),
+            ..ui
+        })
+}
+
+fn deserialize_google(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
+    parse_user_info::<GoogleUserInfo>(json_body, email)
+}
+
+fn deserialize_twitter(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
+    parse_user_info::<TwitterUserInfo>(json_body, email)
+}
+
+fn deserialize_github(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
+    parse_user_info::<GithubUserInfo>(json_body, email)
 }
 
 /// Redirect URI must match exactly with registered.
@@ -106,7 +135,7 @@ fn build_client<'a>(provider: &'a str, redirect_uri: &'a str) -> Option<ScopedCl
             user_info_uri: "https://www.googleapis.com/oauth2/v3/userinfo",
             user_info_params: &[],
             user_info_headers: &[(b"Accept", "application/json")],
-            user_info_de: google_de,
+            user_info_deserializer: deserialize_google,
         }),
         "twitter" => Some(ClientConfig {
             redirect_uri,
@@ -123,7 +152,7 @@ fn build_client<'a>(provider: &'a str, redirect_uri: &'a str) -> Option<ScopedCl
                 "id,name,username,verified,url,profile_image_url",
             )],
             user_info_headers: &[(b"Accept", "application/json")],
-            user_info_de: twitter_de,
+            user_info_deserializer: deserialize_twitter,
         }),
         "github" => Some(ClientConfig {
             redirect_uri,
@@ -140,7 +169,7 @@ fn build_client<'a>(provider: &'a str, redirect_uri: &'a str) -> Option<ScopedCl
                 (b"Accept", "application/vnd.github.v3+json"),
                 (b"User-Agent", "Zingg-Starter-App"),
             ],
-            user_info_de: github_de,
+            user_info_deserializer: deserialize_github,
         }),
         _ => None,
     }
@@ -148,14 +177,14 @@ fn build_client<'a>(provider: &'a str, redirect_uri: &'a str) -> Option<ScopedCl
 }
 
 fn build_generic_oauth(cfg: ClientConfig) -> ScopedClient {
-    let client_id = ClientId::new(env::var(cfg.client_id_env).expect(&format!(
-        "Missing the {} environment variable.",
-        cfg.client_id_env
-    )));
+    let client_id = ClientId::new(
+        env::var(cfg.client_id_env)
+            .unwrap_or_else(|_| panic!("Missing the {} environment variable.", cfg.client_id_env))
+        );
     let client_secret = cfg.client_secret_env.map(|secret_env| {
         ClientSecret::new(
             env::var(secret_env)
-                .expect(&format!("Missing the {} environment variable.", secret_env)),
+                .unwrap_or_else(|_| panic!("Missing the {} environment variable.", secret_env))
         )
     });
     let auth_url =
@@ -176,11 +205,13 @@ fn build_generic_oauth(cfg: ClientConfig) -> ScopedClient {
     ScopedClient {
         inner,
         scopes: array_str_to_vec(cfg.scopes),
-        user_info_uri: cfg.user_info_uri.to_owned(),
         login_hint_key: cfg.login_hint_key.map(|key| key.to_string()),
-        user_info_params: array_tuple_str_to_vec(cfg.user_info_params),
-        user_info_headers: array_tuple_u8_to_vec(cfg.user_info_headers),
-        user_info_de: cfg.user_info_de,
+        user_info_request: UserInfoRequest {
+            uri: cfg.user_info_uri.to_string(),
+            params: array_tuple_str_to_vec(cfg.user_info_params),
+            headers: array_tuple_u8_to_vec(cfg.user_info_headers),
+            deserializer: cfg.user_info_deserializer,
+        },
     }
 }
 
@@ -222,19 +253,6 @@ impl From<GoogleUserInfo> for UserInfo {
     }
 }
 
-fn set_email(ui: UserInfo, email: &str) -> UserInfo {
-    UserInfo {
-        login_email: email.to_owned(),
-        ..ui
-    }
-}
-
-fn google_de(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
-    serde_json::from_str::<GoogleUserInfo>(json_body)
-        .map(|google| google.into())
-        .map(|ui| set_email(ui, email))
-}
-
 // Twitter `users/me` endpoint
 #[derive(Debug, Deserialize, Serialize)]
 struct TwitterUserInfo {
@@ -257,12 +275,6 @@ impl From<TwitterUserInfo> for UserInfo {
             provider_email: None,
         }
     }
-}
-
-fn twitter_de(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
-    serde_json::from_str::<TwitterUserInfo>(json_body)
-        .map(|twitter| twitter.into())
-        .map(|ui| set_email(ui, email))
 }
 
 // Github `users` endpoint
@@ -288,10 +300,4 @@ impl From<GithubUserInfo> for UserInfo {
             provider_email: github.email,
         }
     }
-}
-
-fn github_de(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
-    serde_json::from_str::<GithubUserInfo>(json_body)
-        .map(|github| github.into())
-        .map(|ui| set_email(ui, email))
 }

@@ -111,8 +111,8 @@ pub fn load() -> TemplateStore {
     let watcher = None;
 
     TemplateStore {
-        templates: templates,
-        watcher: watcher,
+        templates,
+        watcher,
     }
 }
 
@@ -153,9 +153,7 @@ fn is_temp_file(path: &Path) -> bool {
 #[cfg(feature = "template_watcher")]
 fn is_folder_empty(dir: &Path) -> bool {
     // Can panic if we don't have the rights I guess?
-    let files: Vec<_> = read_dir(dir)
+    read_dir(dir)
         .expect("Failed to read a directory to see if it was empty")
-        .collect();
-
-    files.is_empty()
+        .count() == 0
 }

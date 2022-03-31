@@ -15,9 +15,17 @@ pub struct TextField {
 }
 
 impl TextField {
-    pub fn new<S>(value: S) -> Self where S: Into<String> {
-        Self { value: value.into(), errors: Vec::new() }
+    pub fn from_string(value: String) -> Self {
+        Self { value, ..Self::default() }
     }
+
+    pub fn new<S>(value: S) -> Self where S: Into<String> {
+        Self::from_string(value.into())
+    }
+}
+
+impl From<String> for TextField {
+    fn from(value: String) -> Self { Self::from_string(value) }
 }
 
 impl fmt::Display for TextField {
@@ -31,7 +39,7 @@ impl<'de> Deserialize<'de> for TextField {
     where
         D: Deserializer<'de>,
     {
-        Deserialize::deserialize(deserializer).map(|t: String| TextField::new(t))
+        Deserialize::deserialize(deserializer).map(TextField::from_string)
     }
 }
 
@@ -45,7 +53,7 @@ impl Deref for TextField {
 
 impl Validation for TextField {
     fn is_valid(&mut self) -> bool {
-        if self.value == "" {
+        if self.value.is_empty() {
             self.errors.push("Value cannot be blank.".to_string());
             return false;
         }

@@ -60,7 +60,7 @@ impl Email {
         debug!("sendgrid payload: {}", serde_json::to_string(&data)?);
 
         let api_key = var("SENDGRID_API_KEY").expect("SENDGRID_API_KEY not set!");
-        let resp = minreq::post(base_api_url.to_owned() + "/v3/mail/send") // TODO use external server  for test
+        let resp = minreq::post(base_api_url.to_string() + "/v3/mail/send") // TODO use external server  for test
             .with_header("Authorization: Bearer", api_key)
             .with_json(&data)?
             .with_timeout(30)

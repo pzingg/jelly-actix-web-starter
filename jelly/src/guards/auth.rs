@@ -68,7 +68,7 @@ where
         let status = request.is_authenticated();
 
         match status {
-            Ok(v) if v == true => {
+            Ok(v) if v => {
                 let req = ServiceRequest::from_parts(request, payload).ok().unwrap();
                 Either::Left(self.service.call(req))
             }

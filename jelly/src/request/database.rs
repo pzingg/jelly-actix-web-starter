@@ -17,7 +17,7 @@ impl DatabasePool for HttpRequest {
     /// Returns a database pool object.
     fn db_pool(&self) -> Result<&PgPool, Error> {
         if let Some(pool) = self.app_data::<PgPool>() {
-            return Ok(&pool);
+            return Ok(pool);
         }
 
         Err(Error::Generic(

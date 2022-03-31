@@ -16,8 +16,12 @@ pub struct BoolField {
 
 impl BoolField {
     pub fn new(value: bool) -> Self {
-        Self { value: value, errors: Vec::new() }
+        Self { value, ..Self::default() }
     }
+}
+
+impl From<bool> for BoolField {
+    fn from(value: bool) -> Self { Self::new(value) }
 }
 
 impl fmt::Display for BoolField {
@@ -31,7 +35,7 @@ impl<'de> Deserialize<'de> for BoolField {
     where
         D: Deserializer<'de>,
     {
-        Deserialize::deserialize(deserializer).map(|t: bool| BoolField::new(t))
+        Deserialize::deserialize(deserializer).map(BoolField::new)
     }
 }
 

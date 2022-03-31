@@ -3,7 +3,7 @@ use jelly::oauth;
 use serde::{Deserialize, Serialize};
 
 fn default_provider() -> String {
-    oauth::client::DEFAULT_PROVIDER.to_owned()
+    oauth::client::DEFAULT_PROVIDER.to_string()
 }
 
 #[derive(Default, Debug, Deserialize, Serialize)]
@@ -29,7 +29,7 @@ impl OAuthLoginForm {
         };
         let hints = oauth::client::provider_hints(provider);
         OAuthLoginForm {
-            provider: provider.to_owned(),
+            provider: provider.to_string(),
             email_hint: hints.map_or(false, |hint| hint.uses_email_hint),
             email: EmailField::default()
         }

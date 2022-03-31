@@ -15,9 +15,17 @@ pub struct DateField {
 }
 
 impl DateField {
-    pub fn new<S>(value: S) -> Self where S: Into<String> {
-        Self { value: value.into(), date: None, errors: Vec::new() }
+    pub fn from_string(value: String) -> Self {
+        Self { value, ..Self::default() }
     }
+
+    pub fn new<S>(value: S) -> Self where S: Into<String> {
+        Self::from_string(value.into())
+    }
+}
+
+impl From<String> for DateField {
+    fn from(value: String) -> Self { Self::from_string(value) }
 }
 
 impl fmt::Display for DateField {
@@ -31,7 +39,7 @@ impl<'de> Deserialize<'de> for DateField {
     where
         D: Deserializer<'de>,
     {
-        Deserialize::deserialize(deserializer).map(|t: String| DateField::new(t))
+        Deserialize::deserialize(deserializer).map(DateField::from_string)
     }
 }
 

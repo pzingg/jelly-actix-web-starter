@@ -14,9 +14,17 @@ pub struct EmailField {
 }
 
 impl EmailField {
-    pub fn new<S>(value: S) -> Self where S: Into<String> {
-        Self { value: value.into(), errors: Vec::new() }
+    pub fn from_string(value: String) -> Self {
+        Self { value, ..Self::default() }
     }
+
+    pub fn new<S>(value: S) -> Self where S: Into<String> {
+        Self::from_string(value.into())
+    }
+}
+
+impl From<String> for EmailField {
+    fn from(value: String) -> Self { Self::from_string(value) }
 }
 
 impl fmt::Display for EmailField {
@@ -30,7 +38,7 @@ impl<'de> Deserialize<'de> for EmailField {
     where
         D: Deserializer<'de>,
     {
-        Deserialize::deserialize(deserializer).map(|t: String| EmailField::new(t))
+        Deserialize::deserialize(deserializer).map(EmailField::from_string)
     }
 }
 
@@ -44,7 +52,7 @@ impl Deref for EmailField {
 
 impl Validation for EmailField {
     fn is_valid(&mut self) -> bool {
-        if self.value == "" {
+        if self.value.is_empty() {
             self.errors
                 .push("Email address cannot be blank.".to_string());
             return false;

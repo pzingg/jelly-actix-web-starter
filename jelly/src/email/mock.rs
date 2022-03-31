@@ -42,12 +42,12 @@ fn create_response(
     body: &serde_json::Value,
 ) -> MockResponse {
     let mut headers = HashMap::new();
-    headers.insert("Content-Type".to_owned(), "application/json".to_owned());
+    headers.insert("Content-Type".to_string(), "application/json".to_string());
 
     MockResponse {
-        status_code: status_code,
+        status_code,
+        headers,
         reason_phrase: reason_phrase.into(),
-        headers: headers,
         body: body.clone(),
     }
 }
@@ -57,7 +57,7 @@ impl Email {
     /// is set in your `.env`.
     pub fn send_via_mock(&self) -> Result<(), anyhow::Error> {
         let pattern = var("EMAIL_MOCK_BOUNCE_PATTERN")
-            .or_else::<anyhow::Error, _>(|_v| Ok("^$".to_owned()))
+            .or_else::<anyhow::Error, _>(|_v| Ok("^$".to_string()))
             .unwrap();
         let re = Regex::new(&pattern).unwrap();
         let resp = match re.find(&self.to) {
@@ -68,7 +68,7 @@ impl Email {
                     "To": self.to,
                     "SubmittedAt": Utc::now(),
                     "MessageID": Uuid::new_v4(),
-                    "ErrorCode": 406 as i32,
+                    "ErrorCode": 406_i32,
                     "Message": "Address is inactive."}),
             ),
             _ => create_response(
@@ -78,7 +78,7 @@ impl Email {
                     "To": self.to,
                     "SubmittedAt": Utc::now(),
                     "MessageID": Uuid::new_v4(),
-                    "ErrorCode": 0 as i32,
+                    "ErrorCode": 0_i32,
                     "Message": "OK"}),
             ),
         };

@@ -78,7 +78,7 @@ pub trait OneTimeUseTokenGenerator {
     /// as well as timestamp validation.
     fn is_token_valid(&self, token: &str) -> bool {
         // Try to split the token, barf if a bad format is found.
-        let split = token.split("-").collect::<Vec<&str>>();
+        let split = token.split('-').collect::<Vec<&str>>();
         if split.len() != 2 {
             return false;
         }

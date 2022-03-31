@@ -49,7 +49,7 @@ impl Email {
         let mut mailer_builder = SmtpTransport::relay(&host)?
             .port(port.parse()?)
             .credentials(creds);
-        if let Ok(notls) = var("EMAIL_SMTP_NOTLS").and_then(|v| Ok(v == "1" || v == "true")) {
+        if let Ok(notls) = var("EMAIL_SMTP_NOTLS").map(|v| v == "1" || v == "true") {
             if notls {
                 mailer_builder = mailer_builder.tls(Tls::None);
                 info!("Send email with no TLS");

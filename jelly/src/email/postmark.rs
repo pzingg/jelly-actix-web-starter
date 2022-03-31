@@ -23,7 +23,7 @@ impl Email {
     pub fn send_via_postmark(&self, base_url_api: &str) -> Result<(), anyhow::Error> {
         let api_key = var("POSTMARK_API_KEY").expect("POSTMARK_API_KEY not set!");
 
-        let resp = minreq::post(base_url_api.to_owned() + "/email")
+        let resp = minreq::post(base_url_api.to_string() + "/email")
             .with_header("X-Postmark-Server-Token", api_key)
             .with_json(&self)?
             .send()
