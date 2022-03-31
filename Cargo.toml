@@ -2,7 +2,7 @@
 name = "rust-starterapp"
 version = "0.1.1"
 authors = ["peter.zingg@gmail.com"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "mainlib"
@@ -19,6 +19,7 @@ base64-url = "1.4.8"
 jelly = { path = "jelly" }
 log = "*"
 serde = "1.0"
+sqlx = { version = "0.5", default-features = false, features = ["runtime-actix-rustls", "macros", "postgres", "chrono", "json"] }
 thiserror = "1.0.30"
 
 [features]

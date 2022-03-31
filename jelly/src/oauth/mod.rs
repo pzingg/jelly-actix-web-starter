@@ -146,7 +146,7 @@ pub fn fetch_user_info(
 
     // TODO why is refresh_token None?
     if let Some(refresh_token) = token_info.response.refresh_token() {
-        session.set(SESSION_OAUTH_TOKEN, refresh_token)?;
+        session.insert(SESSION_OAUTH_TOKEN, refresh_token)?;
     }
 
     let user_info_request = get_user_info_request(access_token, &token_info.user_info_request);

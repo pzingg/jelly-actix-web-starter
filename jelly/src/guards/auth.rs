@@ -1,6 +1,7 @@
 use std::task::{Context, Poll};
 
 use actix_service::{Service, Transform};
+use actix_web::body::BoxBody;
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 use actix_web::http::header::LOCATION;
 use actix_web::{Error, HttpResponse};
@@ -17,13 +18,12 @@ pub struct Auth {
     pub redirect_to: &'static str,
 }
 
-impl<S, B> Transform<S> for Auth
+impl<S> Transform<S, ServiceRequest> for Auth
 where
-    S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S: Service<ServiceRequest, Response = ServiceResponse<BoxBody>, Error = Error>,
     S::Future: 'static,
 {
-    type Request = ServiceRequest;
-    type Response = ServiceResponse<B>;
+    type Response = ServiceResponse<BoxBody>;
     type Error = Error;
     type InitError = ();
     type Transform = AuthMiddleware<S>;
@@ -48,44 +48,41 @@ pub struct AuthMiddleware<S> {
     service: S,
 }
 
-impl<S, B> Service for AuthMiddleware<S>
+impl<S> Service<ServiceRequest> for AuthMiddleware<S>
 where
-    S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S: Service<ServiceRequest, Response = ServiceResponse<BoxBody>, Error = Error>,
     S::Future: 'static,
 {
-    type Request = ServiceRequest;
-    type Response = ServiceResponse<B>;
+    type Response = ServiceResponse<BoxBody>;
     type Error = Error;
     type Future = Either<S::Future, Ready<Result<Self::Response, Self::Error>>>;
 
-    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+    fn poll_ready(&self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(cx)
     }
 
-    fn call(&mut self, req: ServiceRequest) -> Self::Future {
+    fn call(&self, req: ServiceRequest) -> Self::Future {
         let (request, payload) = req.into_parts();
 
         let status = request.is_authenticated();
 
         match status {
             Ok(v) if v => {
-                let req = ServiceRequest::from_parts(request, payload).ok().unwrap();
+                let req = ServiceRequest::from_parts(request, payload);
                 Either::Left(self.service.call(req))
             }
 
             Ok(_) => Either::Right(ok(ServiceResponse::new(
                 request,
                 HttpResponse::Found()
-                    .header(LOCATION, self.redirect_to)
+                    .append_header((LOCATION, self.redirect_to))
                     .finish()
-                    .into_body(),
             ))),
 
             Err(e) => Either::Right(ok(ServiceResponse::new(
                 request,
                 HttpResponse::InternalServerError()
-                    .body(&render(e))
-                    .into_body(),
+                    .body(render(e))
             ))),
         }
     }

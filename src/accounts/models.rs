@@ -6,7 +6,7 @@ use jelly::chrono::{DateTime, Utc};
 use jelly::djangohashers as hasher;
 use jelly::error::Error;
 use jelly::serde::{Deserialize, Serialize};
-use jelly::sqlx::{self, postgres::PgPool, types::Json, FromRow};
+use sqlx::{postgres::PgPool, types::Json, FromRow};
 
 use super::forms::{LoginForm, NewAccountForm};
 use crate::oauth::forms::LinkIdentityForm;

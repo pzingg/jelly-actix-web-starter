@@ -79,8 +79,8 @@ impl Render for HttpRequest {
 
     fn redirect(&self, location: &str) -> Result<HttpResponse, Error> {
         Ok(HttpResponse::Found()
-            .header(LOCATION, location)
+            .append_header((LOCATION, location))
             .finish()
-            .into_body())
+        )
     }
 }

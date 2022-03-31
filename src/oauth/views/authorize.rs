@@ -1,4 +1,4 @@
-use jelly::actix_session::{Session, UserSession};
+use jelly::actix_session::Session;
 use jelly::actix_web::web;
 use jelly::error::OAuthError;
 use jelly::forms::{EmailField, TextField};

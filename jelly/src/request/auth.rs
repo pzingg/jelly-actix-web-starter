@@ -1,4 +1,4 @@
-use actix_session::UserSession;
+use actix_session::SessionExt;
 use actix_web::HttpRequest;
 
 use crate::SESSION_USER;
@@ -31,7 +31,7 @@ impl Authentication for HttpRequest {
     }
 
     fn set_user(&self, account: User) -> Result<(), Error> {
-        self.get_session().set(SESSION_USER, account)?;
+        self.get_session().insert(SESSION_USER, account)?;
         Ok(())
     }
 

@@ -1,6 +1,5 @@
 //!  Views for user auth.
 
-use jelly::actix_session::UserSession;
 use jelly::prelude::*;
 use jelly::Result;
 

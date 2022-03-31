@@ -1,4 +1,3 @@
-use jelly::actix_session::UserSession;
 use jelly::actix_web::web;
 use jelly::error::OAuthError;
 use jelly::oauth;

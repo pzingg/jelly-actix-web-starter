@@ -14,7 +14,7 @@ pub fn make_random_password() -> String {
 
     let password: String = (0..PASSWORD_LEN)
         .map(|_| {
-            let idx = rng.gen_range(0, len);
+            let idx = rng.gen_range(0..len);
             CHARSET[idx] as char
         })
         .collect();

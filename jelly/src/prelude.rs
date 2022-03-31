@@ -3,6 +3,7 @@
 //! and move on with your life.
 
 pub use super::{
+    actix_session::SessionExt,
     actix_web::{HttpRequest, HttpResponse},
 
     error::Error,

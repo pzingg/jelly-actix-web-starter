@@ -122,7 +122,7 @@ impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::InternalServerError()
             .content_type("text/html; charset=utf-8")
-            .body(&render(self))
+            .body(render(self))
     }
 }
 

@@ -1,9 +1,10 @@
 use std::env;
 use std::sync::Arc;
 
-use actix_session::CookieSession;
+use actix_session::{SessionMiddleware, storage::CookieSessionStore};
+use actix_web::cookie::Key;
+use actix_web::{dev, middleware, web, App, HttpServer};
 use actix_web::web::ServiceConfig;
-use actix_web::{dev, middleware, web, App, HttpResponse, HttpServer};
 use background_jobs::memory_storage::Storage;
 use background_jobs::{create_server, WorkerConfig};
 use sqlx::postgres::PgPoolOptions;
@@ -53,10 +54,7 @@ impl Server {
         let bind = env::var("BIND_TO").expect("BIND_TO not set!");
         let _root_domain = env::var("JELLY_DOMAIN").expect("JELLY_DOMAIN not set!");
 
-        #[cfg(feature = "production")]
-        let domain = env::var("SESSIONID_DOMAIN").expect("SESSIONID_DOMAIN not set!");
-
-        let key = env::var("SECRET_KEY").expect("SECRET_KEY not set!");
+        let secret_key = Key::from(env::var("SECRET_KEY").expect("SECRET_KEY not set!").as_bytes());
 
         let template_store = crate::templates::load();
         let templates = template_store.templates.clone();
@@ -72,36 +70,31 @@ impl Server {
 
         let server = HttpServer::new(move || {
             // !production needs no domain set, because browsers.
+
             #[cfg(not(feature = "production"))]
-            let session_storage = CookieSession::signed(key.as_bytes())
-                .name("sessionid")
-                .secure(false)
-                .path("/");
+            let session_storage = SessionMiddleware::builder(
+                CookieSessionStore::default(), secret_key.clone())
+                .cookie_path("/".to_string())
+                .cookie_name("sessionid".to_string())
+                .cookie_secure(false);
 
             #[cfg(feature = "production")]
-            let session_storage = CookieSession::signed(key.as_bytes())
-                .name("sessionid")
-                .path("/")
-                .same_site(actix_web::cookie::SameSite::Lax)
-                .domain(&domain)
-                .secure(true);
+            let session_storage = SessionMiddleware::builder(
+                CookieSessionStore::default(), secret_key.clone())
+                .cookie_path("/".to_string())
+                .cookie_name("sessionid".to_string())
+                .cookie_secure(true)
+                .cookie_same_site(actix_web::cookie::SameSite::Lax)
+                .cookie_domain(Some(env::var("SESSIONID_DOMAIN").expect("SESSIONID_DOMAIN not set!")));
 
             let mut app = App::new()
                 .app_data(pool.clone())
                 .app_data(templates.clone())
                 .wrap(middleware::Logger::default())
-                .wrap(session_storage)
+                .wrap(session_storage.build())
                 // Depending on your CORS needs, you may opt to change this
                 // block. Up to you.
-                .default_service(
-                    web::resource("")
-                        .route(web::get().to(crate::utils::not_found))
-                        .route(web::head().to(HttpResponse::MethodNotAllowed))
-                        .route(web::delete().to(HttpResponse::MethodNotAllowed))
-                        .route(web::patch().to(HttpResponse::MethodNotAllowed))
-                        .route(web::put().to(HttpResponse::MethodNotAllowed))
-                        .route(web::post().to(HttpResponse::MethodNotAllowed)),
-                )
+                .default_service(web::to(crate::utils::default_handler))
                 .configure(crate::utils::static_handler);
 
             for handler in apps.iter() {

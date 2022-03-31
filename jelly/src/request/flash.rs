@@ -1,4 +1,4 @@
-use actix_session::UserSession;
+use actix_session::SessionExt;
 use actix_web::HttpRequest;
 
 use crate::SESSION_FLASH;
@@ -33,7 +33,7 @@ impl FlashMessages for HttpRequest {
             title: title.to_string(),
             message: message.to_string(),
         });
-        session.set(SESSION_FLASH, messages)?;
+        session.insert(SESSION_FLASH, messages)?;
 
         Ok(())
     }
