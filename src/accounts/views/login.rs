@@ -9,7 +9,7 @@ use crate::accounts::Account;
 /// The login form.
 pub async fn form(request: HttpRequest) -> Result<HttpResponse> {
     if request.is_authenticated()? {
-        return request.redirect("/dashboard/");
+        return request.redirect("/dashboard");
     }
 
     request.render(200, "accounts/login.html", {
@@ -25,7 +25,7 @@ pub async fn authenticate(
     form: web::Form<LoginForm>,
 ) -> Result<HttpResponse> {
     if request.is_authenticated()? {
-        return request.redirect("/dashboard/");
+        return request.redirect("/dashboard");
     }
 
     let mut form = form.into_inner();
@@ -42,7 +42,7 @@ pub async fn authenticate(
     if let Ok(user) = Account::authenticate(&form, db).await {
         Account::update_last_login(user.id, db).await?;
         request.set_user(user)?;
-        return request.redirect("/dashboard/");
+        return request.redirect("/dashboard");
     }
 
     request.render(400, "accounts/login.html", {

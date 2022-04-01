@@ -9,7 +9,7 @@ use jelly::Result;
 use crate::accounts::forms::{ChangePasswordForm, EmailForm};
 use crate::accounts::jobs::{SendPasswordWasResetEmail, SendResetPasswordEmail};
 use crate::accounts::views::utils::validate_token;
-use crate::accounts::Account;
+use crate::accounts::{Account, TokenInfo};
 
 /// Just renders a standard "Enter Your Email" password reset page.
 pub async fn form(request: HttpRequest) -> Result<HttpResponse> {
@@ -35,9 +35,10 @@ pub async fn request_reset(request: HttpRequest, form: Form<EmailForm>) -> Resul
         });
     }
 
-    request.queue(SendResetPasswordEmail {
+    let queue = request.job_queue()?;
+    queue.queue(SendResetPasswordEmail {
         to: form.email.value,
-    })?;
+    }).await?;
 
     request.render(200, "accounts/reset_password/requested.html", {
         let mut context = Context::new();
@@ -54,15 +55,15 @@ pub async fn request_reset(request: HttpRequest, form: Form<EmailForm>) -> Resul
 /// such is Rust for this type of thing. Write it once and move on. ;P
 pub async fn with_token(
     request: HttpRequest,
-    Path((uidb64, ts, token)): Path<(String, String, String)>,
+    path: Path<TokenInfo>,
 ) -> Result<HttpResponse> {
-    if let Ok(_account) = validate_token(&request, &uidb64, &ts, &token).await {
+    if let Ok(_account) = validate_token(&request, &path.uidb64, &path.ts, &path.token).await {
         request.render(200, "accounts/reset_password/change_password.html", {
             let mut context = Context::new();
             context.insert("form", &ChangePasswordForm::default());
-            context.insert("uidb64", &uidb64);
-            context.insert("ts", &ts);
-            context.insert("token", &token);
+            context.insert("uidb64", &path.uidb64);
+            context.insert("ts", &path.ts);
+            context.insert("token", &path.token);
             context
         })
     } else {
@@ -74,12 +75,12 @@ pub async fn with_token(
 /// them to the dashboard with a flash message.
 pub async fn reset(
     request: HttpRequest,
-    Path((uidb64, ts, token)): Path<(String, String, String)>,
+    path: Path<TokenInfo>,
     form: Form<ChangePasswordForm>,
 ) -> Result<HttpResponse> {
     let mut form = form.into_inner();
 
-    if let Ok(account) = validate_token(&request, &uidb64, &ts, &token).await {
+    if let Ok(account) = validate_token(&request, &path.uidb64, &path.ts, &path.token).await {
         // Note! This is a case where we need to fetch the user ahead of form validation.
         // While it would be nice to avoid the DB hit, validating that their password is secure
         // requires pulling some account values...
@@ -97,9 +98,10 @@ pub async fn reset(
         let pool = request.db_pool()?;
         Account::update_password_and_last_login(account.id, &form.password, pool).await?;
 
-        request.queue(SendPasswordWasResetEmail {
+        let queue = request.job_queue()?;
+        queue.queue(SendPasswordWasResetEmail {
             to: account.email.clone(),
-        })?;
+        }).await?;
 
         request.set_user(User {
             id: account.id,
@@ -109,7 +111,7 @@ pub async fn reset(
         })?;
 
         request.flash("Password Reset", "Your password was successfully reset.")?;
-        request.redirect("/dashboard/")
+        request.redirect("/dashboard")
     } else {
         request.render(200, "accounts/reset_password/change_password.html", {
             let mut context = Context::new();

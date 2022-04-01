@@ -11,7 +11,7 @@ use crate::oauth::forms::OAuthLoginForm;
 /// Path contains the provider key ("google", "twitter", etc.)
 pub async fn form(request: HttpRequest, path: web::Path<String>) -> Result<HttpResponse> {
     if request.is_authenticated()? {
-        return request.redirect("/dashboard/");
+        return request.redirect("/dashboard");
     }
 
     let provider = path.into_inner();
@@ -31,7 +31,7 @@ pub async fn authenticate(
     form: web::Form<OAuthLoginForm>,
 ) -> Result<HttpResponse> {
     if request.is_authenticated()? {
-        return request.redirect("/dashboard/");
+        return request.redirect("/dashboard");
     }
 
     let mut form = form.into_inner();
@@ -65,7 +65,7 @@ fn request_authorization(
                 pkce_verifier_secret: pkce_code_verifier.secret().into(),
             };
 
-            request.get_session().set(SESSION_OAUTH_FLOW, flow)?;
+            request.get_session().insert(SESSION_OAUTH_FLOW, flow)?;
             request.redirect(&authorize_url.to_string())
         }
         _ => Err(OAuthError::RegisterProviderError(provider.to_string()).into()),

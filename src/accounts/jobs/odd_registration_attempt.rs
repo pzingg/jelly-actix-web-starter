@@ -29,7 +29,7 @@ pub fn build_context(name: &str) -> Context {
     context.insert(
         "action_url",
         &format!(
-            "{}/accounts/reset/",
+            "{}/accounts/reset",
             var("JELLY_DOMAIN").expect("JELLY_DOMAIN not set?")
         ),
     );

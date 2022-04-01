@@ -64,7 +64,7 @@ pub async fn confirm_identity(
     {
         // last_login already updated, so just:
         request.set_user(user)?;
-        return request.redirect("/dashboard/");
+        return request.redirect("/dashboard");
     }
 
     request.render(400, "oauth/confirm.html", {

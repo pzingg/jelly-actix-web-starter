@@ -8,22 +8,22 @@ pub mod views;
 /// Enables oauth2 login and authentication.
 pub fn configure(config: &mut ServiceConfig) {
     config.service(
-        scope("/oauth/")
+        scope("/oauth")
             .service(
                 resource("/login/{provider}")
                     .route(get().to(views::login::form)),
             )
             .service(
-                resource("/login/")
+                resource("/login")
                     .route(post().to(views::login::authenticate)),
             )
             .service(
-                resource("/callback/")
+                resource("/callback")
                     .name("oauth-callback")
                     .route(get().to(views::authorize::exchange_code_for_token)),
             )
             .service(
-                resource("/confirm/")
+                resource("/confirm")
                     .route(post().to(views::authorize::confirm_identity)),
             ),
     );

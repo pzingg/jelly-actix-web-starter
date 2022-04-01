@@ -10,13 +10,11 @@ pub mod dashboard;
 pub mod oauth;
 pub mod pages;
 
-use jelly::Server;
-
 pub async fn main() -> io::Result<()> {
     let stdout = io::stdout();
     let _lock = stdout.lock();
 
-    Server::new()
+    jelly::Server::new()
         .register_service(pages::configure)
         .register_service(accounts::configure)
         .register_jobs(accounts::jobs::configure)

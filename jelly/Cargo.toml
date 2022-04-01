@@ -12,36 +12,38 @@ opt-level = 3
 [dependencies]
 actix-files = { version = "0.6", optional = true }
 actix-service = "2.0"
-actix-session = { version = "0.6", features = ["cookie-session"] }
-actix-web = "4.0"
-actix-rt = "2.7"
+actix-session = { version = "0.6.2", features = ["cookie-session"] }
+actix-web = "4.0.1"
+actix-rt = "2.7.0"
 anyhow = "1.0.56"
 async-trait = "0.1.24"
-background-jobs = "0.8.0"
+background-jobs = "0.12.0"
+background-jobs-actix = "0.12.0"
 chrono = { version = "0.4", features = ["serde"] }
 constant_time_eq = "0.1.5"
 djangohashers = { version = "1.5.3", default-features = false, features = ["with_pbkdf2"] }
 dotenv = "0.15.0"
-env_logger = { version = "0.8.1", default-features = false, features = ["termcolor", "atty", "humantime"] }
+# version determined by pretty_env_logger
+env_logger = { version = "0.7.1", default-features = false, features = ["termcolor", "atty", "humantime"] }
 fancy-regex = "0.8"
 futures = "0.3"
-hmac = "0.10.1"
+hmac = "0.11.0"
 lazy_static = "1.4.0"
 log = "0.4"
 minreq = { version = "2.1.0", features = ["https", "json-using-serde"] }
 notify = { version = "4", optional = true }
 oauth2 = { version = "4.1.0", optional = true }
-pretty_env_logger = "0.4"
+pretty_env_logger = "0.4.0"
 radix = "0.6"
 rand = "*"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.9"
-sqlx = { version = "0.5", default-features = false, features = ["runtime-actix-rustls", "postgres"] }
+sqlx = { version = "0.5.9", default-features = false, features = ["runtime-actix-rustls", "postgres"] }
 tera = "1.5"
 thiserror = "1.0.30"
 validator = "0.11"
-zxcvbn = "2.0.1"
+zxcvbn = "2.2.0"
 lettre = { version="0.10.0-rc.3", optional = true }
 uuid = "0.8"
 

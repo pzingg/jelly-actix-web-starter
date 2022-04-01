@@ -9,7 +9,7 @@ use crate::accounts::Account;
 
 pub async fn form(request: HttpRequest) -> Result<HttpResponse> {
     if request.is_authenticated()? {
-        return request.redirect("/dashboard/");
+        return request.redirect("/dashboard");
     }
 
     request.render(200, "accounts/register.html", {
@@ -24,7 +24,7 @@ pub async fn create_account(
     form: web::Form<NewAccountForm>,
 ) -> Result<HttpResponse> {
     if request.is_authenticated()? {
-        return request.redirect("/dashboard/");
+        return request.redirect("/dashboard");
     }
 
     let mut form = form.into_inner();
@@ -41,17 +41,18 @@ pub async fn create_account(
     //  - send email to existing user asking if they were trying to sign in
     //  - pass requesting user through normal "fake" flow to avoid leaking if
     //      an account exists?
+    let queue = request.job_queue()?;
     let db = request.db_pool()?;
     match Account::register(&form, db).await {
         Ok(uid) => {
-            request.queue(SendVerifyAccountEmail { to: uid })?;
+            queue.queue(SendVerifyAccountEmail { to: uid }).await?;
         }
 
         Err(e) => {
             error!("Error with registering: {:?}", e);
-            request.queue(SendAccountOddRegisterAttemptEmail {
+            queue.queue(SendAccountOddRegisterAttemptEmail {
                 to: form.email.value.clone(),
-            })?;
+            }).await?;
         }
     }
 

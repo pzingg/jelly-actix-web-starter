@@ -100,6 +100,14 @@ If a user attempts to register with an already registered email address, the fol
 - The person attempting to register will be shown the "normal" flow, as if they successfully signed up, being told to check their email to verify.
 - The already registered user is sent an email notifying that this happened, and includes a link to password reset - e.g, maybe they're a confused user who just needs to get back in.
 
+## OAuth2
+(Experimental.) The local accounts (email and password authentication), as
+described above, now have an option of an empty (NULL) password field,
+if they have a linked identity from one of several optional OAuth2 providers
+(Google, Twitter, and GitHub for now). An OAuth "login" flow will
+send them to the designated provider, and then return them to confirm
+the local email they wish to use for the local account.
+
 ## Templates
 Templates are written in [Tera](https://github.com/Keats/tera). If you've written templates in Django or Jinja2, they should be _very_ familiar.
 
@@ -145,7 +153,7 @@ pub async fn authenticate(
     form: Form<LoginForm>
 ) -> Result<HttpResponse> {
     if request.is_authenticated()? {
-        return request.redirect("/dashboard/");
+        return request.redirect("/dashboard");
     }
 
     let mut form = form.into_inner();

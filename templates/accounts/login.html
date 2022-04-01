@@ -5,7 +5,7 @@
 {% block content %}
 <h1>Login with password</h1>
 
-<form action="/accounts/login/" method="POST" id="loginform">
+<form action="/accounts/login" method="POST" id="loginform">
     {% if error %}
     <ul>
         <li>&#9432;&nbsp; {{ error }}</li>
@@ -20,7 +20,7 @@
     <p>
         <label for="password">Password:</label>
         <input name="password" type="password">
-        <a href="/accounts/reset/" title="Reset Your Password">Forgot your password?</a>
+        <a href="/accounts/reset" title="Reset Your Password">Forgot your password?</a>
     </p>
 
     <button type="submit">Login</button>

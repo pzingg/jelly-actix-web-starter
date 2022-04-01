@@ -2,7 +2,9 @@
 
 use jelly::actix_web;
 use std::io;
-// use mainlib; clippy: this import is redundant
+
+// clippy: this import is redundant
+// use mainlib;
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {

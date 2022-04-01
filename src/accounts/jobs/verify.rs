@@ -38,7 +38,7 @@ impl Job for SendVerifyAccountEmail {
             let domain = env::var("JELLY_DOMAIN").expect("No JELLY_DOMAIN value set!");
 
             let verify_url = format!(
-                "{}/accounts/verify/{}-{}/",
+                "{}/accounts/verify/{}-{}",
                 domain,
                 base64_url::encode(&format!("{}", account.id)),
                 account

@@ -7,11 +7,11 @@ mod views;
 
 pub fn configure(config: &mut ServiceConfig) {
     let guard = Auth {
-        redirect_to: "/accounts/login/",
+        redirect_to: "/accounts/login",
     };
 
     config.service(
-        scope("/dashboard/")
+        scope("/dashboard")
             .wrap(guard)
             // Index
             .service(resource("").to(views::dashboard)),

@@ -33,7 +33,7 @@ fn hash(value: &str, timestamp: u64) -> Result<String, Error> {
         env::var("SECRET_KEY").expect("Unable to pull SECRET_KEY for account token generation");
 
     let key = format!("{}{}", KEY_SALT, secret_key);
-    let mut hasher = HmacSha256::new_varkey(key.as_bytes())
+    let mut hasher = HmacSha256::new_from_slice(key.as_bytes())
         .map_err(|e| Error::Generic(format!("Error generating HMACSHA256: {:?}", e)))?;
 
     hasher.update(value.as_bytes());

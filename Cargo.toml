@@ -14,21 +14,27 @@ path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
+# include direct dependency for macros, e.g. #[actix_web::main]
+# version must match jelly
+actix-web = { version = "4.0.1", features = ["macros"] }
 anyhow = "1.0.56"
 base64-url = "1.4.8"
 jelly = { path = "jelly" }
 log = "*"
 serde = "1.0"
-sqlx = { version = "0.5", default-features = false, features = ["runtime-actix-rustls", "macros", "postgres", "chrono", "json"] }
+# include direct dependency for sqlx macros
+# version must match jelly
+sqlx = { version = "0.5.9", default-features = false, features = ["runtime-actix-rustls", "macros", "postgres", "chrono", "json"] }
 thiserror = "1.0.30"
 
 [features]
-# Not using "jelly/static", "jelly/email-postmark", etc.
+# not using "jelly/static", "jelly/email-postmark", etc.
 default = ["jelly/template_watcher", "jelly/email-mock", "jelly/oauth"]
 production = ["jelly/production"]
 
 [dev-dependencies]
 dotenv = "0.15.0"
-env_logger = "0.9.0"
+# version must match jelly
+env_logger = "0.7.1"
 lazy_static = "1.4.0"
 test-log = "0.2.8"

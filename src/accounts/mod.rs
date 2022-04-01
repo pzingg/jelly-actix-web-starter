@@ -1,6 +1,7 @@
 //! URL dispatcher for user account related API endpoints.
 
 use jelly::actix_web::web::{get, post, resource, scope, ServiceConfig};
+use jelly::serde::Deserialize;
 
 pub mod forms;
 pub mod jobs;
@@ -9,34 +10,41 @@ pub mod views;
 
 pub use models::Account;
 
+#[derive(Deserialize)]
+pub struct TokenInfo {
+    pub uidb64: String,
+    pub ts: String,
+    pub token: String,
+}
+
 pub fn configure(config: &mut ServiceConfig) {
     config.service(
-        scope("/accounts/")
+        scope("/accounts")
             .service(
-                resource("/register/")
+                resource("/register")
                     .route(get().to(views::register::form))
                     .route(post().to(views::register::create_account)),
             )
             .service(
-                resource("/reset/{uidb64}-{ts}-{token}/")
+                resource("/reset/{uidb64}-{ts}-{token}")
                     .route(get().to(views::reset_password::with_token))
                     .route(post().to(views::reset_password::reset)),
             )
             .service(
-                resource("/reset/")
+                resource("/reset")
                     .route(get().to(views::reset_password::form))
                     .route(post().to(views::reset_password::request_reset)),
             )
             .service(
-                resource("/login/")
+                resource("/login")
                     .route(get().to(views::login::form))
                     .route(post().to(views::login::authenticate)),
             )
             .service(
-                resource("/verify/{uidb64}-{ts}-{token}/")
+                resource("/verify/{uidb64}-{ts}-{token}")
                     .route(get().to(views::verify::with_token)),
             )
-            .service(resource("/verify/").route(get().to(views::verify::verify)))
-            .service(resource("/logout/").route(post().to(views::logout))),
+            .service(resource("/verify").route(get().to(views::verify::verify)))
+            .service(resource("/logout").route(post().to(views::logout))),
     );
 }

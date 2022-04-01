@@ -4,6 +4,7 @@ use sqlx::postgres::PgPool;
 use std::sync::{Arc, RwLock};
 use tera::Tera;
 
+pub use background_jobs_actix::Unmanaged;
 pub use background_jobs::{Job, WorkerConfig};
 
 pub const DEFAULT_QUEUE: &str = "default";
@@ -17,7 +18,7 @@ pub struct JobState {
     pub templates: Arc<RwLock<Tera>>,
 }
 
-pub type JobConfig = WorkerConfig<JobState>;
+pub type JobConfig = WorkerConfig<JobState, Unmanaged>;
 
 impl JobState {
     /// Creates a new `JobState` object.
