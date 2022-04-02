@@ -20,6 +20,7 @@ type HintMap = HashMap<&'static str, ProviderHints>;
 
 type ClientMap = HashMap<String, Option<ScopedClient>>;
 
+// TODO 105: use once_cell get_or_init and/or once_cell:sync::Lazy
 lazy_static! {
     static ref LOGIN_HINTS: Arc<Mutex<HintMap>> = Arc::new(Mutex::new(build_hints()));
     static ref CLIENTS: Arc<Mutex<ClientMap>> = Arc::new(Mutex::new(HashMap::new()));
@@ -56,7 +57,6 @@ pub fn provider_hints(provider: &str) -> Option<ProviderHints> {
     LOGIN_HINTS.lock().unwrap().get(provider).copied()
 }
 
-// TODO is there a better return value than client.clone() ?
 pub fn client_for(provider: &str) -> Option<ScopedClient> {
     if valid_provider(provider) {
         let mut provider_map = CLIENTS.lock().unwrap();
@@ -70,6 +70,7 @@ pub fn client_for(provider: &str) -> Option<ScopedClient> {
             provider_map.insert(provider.to_string(), client);
         }
         match provider_map.get(provider) {
+            // TODO 104: can we avoid client.clone() ?
             Some(Some(client)) => Some(client.clone()),
             _ => None,
         }

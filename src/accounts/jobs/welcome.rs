@@ -14,7 +14,8 @@ use crate::accounts::Account;
 /// has been verified.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SendWelcomeAccountEmail {
-    pub to: i32, // TODO use a more specific type.
+    // TODO 102: use a more specific type for account ids
+    pub to: i32,
 }
 
 pub fn build_context(name: &str) -> Context {

@@ -27,7 +27,7 @@ impl Email {
             .with_header("X-Postmark-Server-Token", api_key)
             .with_json(&self)?
             .send()
-            .context("Posting mail vias postmark API")?;
+            .context("Posting mail via postmark API")?;
 
         if resp.status_code == 200 {
             debug!("Mail sent to {} via postmark.", &self.to);

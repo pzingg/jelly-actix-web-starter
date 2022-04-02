@@ -8,9 +8,6 @@ use crate::templates::FlashMessage;
 /// `FlashMessages` implements a one-time-message (hence "Flash") that is useful
 /// for old-school HTML flows that need to display messages in a standardized way
 /// across pages.
-///
-/// This could potentially do less serialization, but it's fine for now.
-/// TODO: Look at whether this can be done with just &str rather than String.
 pub trait FlashMessages {
     /// Adds a flash message to the stack.
     fn flash(&self, title: &str, message: &str) -> Result<(), Error>;
@@ -24,6 +21,8 @@ impl FlashMessages for HttpRequest {
     fn flash(&self, title: &str, message: &str) -> Result<(), Error> {
         let session = self.get_session();
 
+        // This could potentially do less serialization, but it's fine for now.
+        // TODO 103: Look at whether this can be done with just &str rather than String
         let mut messages: Vec<FlashMessage> = match session.get(SESSION_FLASH)? {
             Some(messages) => messages,
             None => Vec::new(),

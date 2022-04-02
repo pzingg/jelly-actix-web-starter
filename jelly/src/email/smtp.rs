@@ -29,9 +29,7 @@ impl Email {
         let port = var("EMAIL_SMTP_PORT").expect("EMAIL_SMTP_PORT not set!");
         let username = var("EMAIL_SMTP_USERNAME").expect("EMAIL_SMTP_USERNAME not set!");
         let password = var("EMAIL_SMTP_PASSWORD").expect("EMAIL_SMTP_PASSWORD not set!");
-        let reply_to = var("JELLY_SUPPORT_EMAIL")
-            .or_else::<anyhow::Error, _>(|_v| Ok(self.from.clone()))
-            .unwrap();
+        let reply_to = var("JELLY_SUPPORT_EMAIL").unwrap_or_else(|_| Ok(self.from.clone()));
 
         let email = Message::builder()
             .from(self.from.parse()?)

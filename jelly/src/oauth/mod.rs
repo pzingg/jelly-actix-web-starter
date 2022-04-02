@@ -143,8 +143,6 @@ pub fn fetch_user_info(
     token_info: TokenInfo,
 ) -> result::Result<UserInfo, Error> {
     let access_token = token_info.response.access_token();
-
-    // TODO why is refresh_token None?
     if let Some(refresh_token) = token_info.response.refresh_token() {
         session.insert(SESSION_OAUTH_TOKEN, refresh_token)?;
     }

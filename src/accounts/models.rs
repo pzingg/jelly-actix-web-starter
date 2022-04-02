@@ -148,7 +148,7 @@ impl Account {
     }
 
     pub async fn register(form: &NewAccountForm, pool: &PgPool) -> Result<i32, Error> {
-        // TODO: return InvalidPassword if password is empty
+        // TODO 101: return InvalidPassword if password is empty
         let password = hasher::make_password(&form.password);
 
         Ok(sqlx::query!(
@@ -201,7 +201,7 @@ impl Account {
         password: &str,
         pool: &PgPool,
     ) -> Result<(), Error> {
-        // TODO: return InvalidPassword if password is empty
+        // TODO 101: return InvalidPassword if password is empty
         let password = hasher::make_password(password);
 
         sqlx::query!(

@@ -104,6 +104,7 @@ impl Server {
             }
 
             // Configure background jobs and start queue
+            // TODO 104: can we avoid clone() ?
             let storage = Storage::new();
             let state = JobState::new("JobState", pool.clone(), templates.clone());
             let mut worker_config = WorkerConfig::new(storage, move |_| state.clone());

@@ -56,21 +56,22 @@ impl Email {
     /// Send the email. Relies on you ensuring that `EMAIL_DEFAULT_FROM`,
     /// is set in your `.env`.
     pub fn send_via_mock(&self) -> Result<(), anyhow::Error> {
-        let pattern = var("EMAIL_MOCK_BOUNCE_PATTERN")
-            .or_else::<anyhow::Error, _>(|_v| Ok("^$".to_string()))
-            .unwrap();
+        let pattern = var("EMAIL_MOCK_BOUNCE_PATTERN").unwrap_or_else(|_| "^$".to_string());
         let re = Regex::new(&pattern).unwrap();
         let resp = match re.find(&self.to) {
-            Ok(_) => create_response(
-                200,
-                "OK",
-                &serde_json::json!({
-                    "To": self.to,
-                    "SubmittedAt": Utc::now(),
-                    "MessageID": Uuid::new_v4(),
-                    "ErrorCode": 406_i32,
-                    "Message": "Address is inactive."}),
-            ),
+            Ok(_) => {
+                debug!("Mocking hard bounce for mail to {}.", &self.to);
+                create_response(
+                    200,
+                    "OK",
+                    &serde_json::json!({
+                        "To": self.to,
+                        "SubmittedAt": Utc::now(),
+                        "MessageID": Uuid::new_v4(),
+                        "ErrorCode": 406_i32,
+                        "Message": "Address is inactive."}),
+                )
+            }
             _ => create_response(
                 200,
                 "OK",
@@ -84,11 +85,11 @@ impl Email {
         };
 
         if resp.status_code == 200 {
-            debug!("Mail sent to {} via postmark.", &self.to);
+            debug!("Mail sent to {} via mock.", &self.to);
             Ok(())
         } else {
             Err(anyhow!(
-                "Sending mail to {} via postmark failed. API call returns code {} : {} \n {} ",
+                "Sending mail to {} via mock failed. API call returns code {} : {} \n {} ",
                 &self.to,
                 resp.status_code,
                 resp.reason_phrase,
