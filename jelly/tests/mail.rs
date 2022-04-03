@@ -6,6 +6,7 @@ use std::sync::{Arc, RwLock};
 use tera::Context;
 use tera::Tera;
 
+#[cfg(feature = "email-sendgrid")]
 #[cfg(test)]
 mod send_via_sendgrid_should {
     use super::*;
@@ -118,6 +119,7 @@ mod send_via_sendgrid_should {
     }
 }
 
+#[cfg(feature = "email-postmark")]
 #[cfg(test)]
 mod send_via_postmark_should {
     use super::*;
@@ -195,7 +197,7 @@ mod send_via_postmark_should {
                     "Subject": "subject line",
                     "TextBody":"test surname name",
                     "HtmlBody":"test surname name",
-                    "MessageStream":"default"} 
+                    "MessageStream":"default"}
                 ));
             resp_with
                 .status(401)

@@ -82,7 +82,7 @@ jobs:
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
         with:
           command: test
-          args: --features=jelly/email-mock
+          args: --features=jelly/email-postmark,jelly/email-sendgrid
 
   test-jelly:
     name: Test Jelly
@@ -123,5 +123,5 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --features=email-mock --manifest-path jelly/Cargo.toml
+          args: --features=email-postmark,email-sendgrid --manifest-path jelly/Cargo.toml
 

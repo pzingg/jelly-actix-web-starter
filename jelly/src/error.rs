@@ -3,9 +3,12 @@
 //! error formats into the one we use for responding.
 
 use actix_web::{HttpResponse, ResponseError};
-use oauth2::{basic, reqwest};
 use std::{error, fmt};
 
+#[cfg(feature = "oauth")]
+use oauth2::{basic, reqwest};
+
+#[cfg(feature = "oauth")]
 #[derive(Debug, thiserror::Error)]
 pub enum OAuthError {
     #[error("invalid provider #{0}")]
@@ -24,6 +27,13 @@ pub enum OAuthError {
     FetchProfileError(#[source] reqwest::HttpClientError),
     #[error("decode profile error: #{0}")]
     DecodeProfileError(#[source] serde_json::error::Error),
+}
+
+#[cfg(not(feature = "oauth"))]
+#[derive(Debug, thiserror::Error)]
+pub enum OAuthError {
+    #[error("oauth2 error")]
+    AnyError
 }
 
 /// This enum represents the largest classes of errors we can expect to
