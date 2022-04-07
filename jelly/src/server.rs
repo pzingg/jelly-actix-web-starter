@@ -7,10 +7,39 @@ use actix_web::{dev, middleware, web, App, HttpServer};
 use actix_web::web::ServiceConfig;
 use background_jobs::memory_storage::Storage;
 use background_jobs::WorkerConfig;
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgPool, PgPoolOptions};
 
 use crate::email::{Configurable, Email};
 use crate::jobs::{JobConfig, JobState, DEFAULT_QUEUE};
+use crate::templates::TemplateStore;
+
+/// We package the startup as a separate struct,
+/// so it can be used outside the server, for
+/// other Actors who need access to logging, email, database,
+/// or templates.
+pub struct ServerConfig {
+    pub pool: PgPool,
+    pub template_store: TemplateStore,
+}
+
+impl ServerConfig {
+    /// Initialize the configuration.
+    pub async fn load() -> Self {
+        dotenv::dotenv().ok();
+        pretty_env_logger::init();
+        Email::check_conf();
+
+        let template_store = crate::templates::load();
+
+        let db_uri = env::var("DATABASE_URL").expect("DATABASE_URL not set!");
+        let pool = PgPoolOptions::new()
+            .connect(&db_uri)
+            .await
+            .expect("Unable to connect to database!");
+
+        ServerConfig { pool, template_store }
+    }
+}
 
 /// This struct provides a slightly simpler way to write `main.rs` in
 /// the root project, and forces more coupling to app-specific modules.
@@ -21,6 +50,7 @@ pub struct Server {
 }
 
 impl Server {
+
     /// Creates a new Server struct to configure.
     pub fn new() -> Self {
         Server::default()
@@ -46,26 +76,13 @@ impl Server {
 
     /// Consumes and then runs the server, with default settings that we
     /// generally want.
-    pub async fn run(self) -> std::io::Result<dev::Server> {
-        dotenv::dotenv().ok();
-        pretty_env_logger::init();
-        Email::check_conf();
-
+    pub async fn run(self, config: ServerConfig) -> std::io::Result<dev::Server> {
         let bind = env::var("BIND_TO").expect("BIND_TO not set!");
         let secret_key = Key::from(env::var("SECRET_KEY").expect("SECRET_KEY not set!").as_bytes());
         let _root_domain = env::var("JELLY_DOMAIN").expect("JELLY_DOMAIN not set!");
 
         #[cfg(feature = "production")]
         let cookie_domain = env::var("SESSIONID_DOMAIN").expect("SESSIONID_DOMAIN not set!");
-
-        let template_store = crate::templates::load();
-        let templates = template_store.templates.clone();
-
-        let db_uri = env::var("DATABASE_URL").expect("DATABASE_URL not set!");
-        let pool = PgPoolOptions::new()
-            .connect(&db_uri)
-            .await
-            .expect("Unable to connect to database!");
 
         let apps = Arc::new(self.apps);
         let jobs = Arc::new(self.jobs);
@@ -89,8 +106,8 @@ impl Server {
                 .cookie_domain(Some(cookie_domain));
 
             let mut app = App::new()
-                .app_data(pool.clone())
-                .app_data(templates.clone())
+                .app_data(config.pool.clone())
+                .app_data(config.template_store.templates.clone())
                 .wrap(middleware::Logger::default())
                 .wrap(session_storage.build())
                 .configure(crate::utils::static_handler)
@@ -106,7 +123,7 @@ impl Server {
             // Configure background jobs and start queue
             // TODO 104: can we avoid clone() ?
             let storage = Storage::new();
-            let state = JobState::new("JobState", pool.clone(), templates.clone());
+            let state = JobState::new("JobState", config.pool.clone(), config.template_store.templates.clone());
             let mut worker_config = WorkerConfig::new(storage, move |_| state.clone());
 
             for handler in jobs.iter() {

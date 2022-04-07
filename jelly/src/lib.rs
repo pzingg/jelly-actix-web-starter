@@ -38,7 +38,7 @@ pub mod utils;
 
 mod server;
 mod templates;
-pub use server::Server;
+pub use server::{Server, ServerConfig};
 
 #[cfg(feature = "oauth")]
 pub mod oauth;

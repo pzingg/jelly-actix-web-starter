@@ -51,6 +51,20 @@ impl UserPass {
 }
 
 impl Account {
+    pub async fn count(pool: &PgPool) -> Result<i64, Error> {
+        Ok(sqlx::query!(
+            "
+            SELECT
+                count(*)
+            FROM accounts
+        "
+        )
+        .fetch_one(pool)
+        .await?
+        .count
+        .unwrap())
+    }
+
     pub async fn get(id: i32, pool: &PgPool) -> Result<Self, Error> {
         Ok(sqlx::query_as_unchecked!(
             Account,

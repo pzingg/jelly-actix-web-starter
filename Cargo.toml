@@ -14,11 +14,14 @@ path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
+actix = "0.13"
 # include direct dependency for macros, e.g. #[actix_web::main]
 # version must match jelly
 actix-web = { version = "4.0.1", features = ["macros"] }
 anyhow = "1.0.56"
 base64-url = "1.4.8"
+chrono = { version = "0.4", features = ["serde"] }
+cron = "0.10"
 jelly = { path = "jelly" }
 log = "*"
 serde = "1.0"
