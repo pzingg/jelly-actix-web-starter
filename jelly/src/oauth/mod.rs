@@ -35,14 +35,14 @@ impl OAuthFlow {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct UserInfo {
     pub provider: &'static str,
     pub id: String,
     pub name: String,
-    pub username: String,
-    pub login_email: String,
+    pub username: Option<String>,
     pub provider_email: Option<String>,
+    pub login_email: String,
 }
 
 // Accepts the json body to be deserialized and the email the user began

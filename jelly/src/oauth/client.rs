@@ -46,6 +46,12 @@ fn build_hints() -> HintMap {
             uses_email_hint: false,
         },
     );
+    hints.insert(
+        "facebook",
+        ProviderHints {
+            uses_email_hint: false,
+        },
+    );
     hints
 }
 
@@ -94,28 +100,57 @@ struct ClientConfig<'a> {
     user_info_deserializer: UserInfoDeserializer,
 }
 
-pub fn parse_user_info<'de, T: Deserialize<'de> + Into<UserInfo>>(
-    json_body: &'de str,
-    email: &str,
-) -> serde_json::Result<UserInfo> {
-    serde_json::from_str::<'de, T>(json_body)
-        .map(|obj| obj.into())
-        .map(|ui| UserInfo {
-            login_email: email.to_string(),
-            ..ui
-        })
+impl<'a> From<ClientConfig<'a>> for ScopedClient {
+    fn from(cfg: ClientConfig<'a>) -> Self {
+        let client_id = ClientId::new(
+            env::var(cfg.client_id_env)
+                .unwrap_or_else(|_| panic!("Missing the {} environment variable.", cfg.client_id_env)),
+        );
+        let client_secret = cfg.client_secret_env.map(|secret_env| {
+            ClientSecret::new(
+                env::var(secret_env)
+                    .unwrap_or_else(|_| panic!("Missing the {} environment variable.", secret_env)),
+            )
+        });
+        let auth_url =
+            AuthUrl::new(cfg.auth_url.to_string()).expect("Invalid authorization endpoint URL");
+        let token_url = TokenUrl::new(cfg.token_url.to_string()).expect("Invalid token endpoint URL");
+
+        let mut inner = BasicClient::new(client_id, client_secret, auth_url, Some(token_url))
+            .set_redirect_uri(
+                RedirectUrl::new(cfg.redirect_uri.to_string()).expect("Invalid redirect URL"),
+            );
+
+        if let Some(revoke_url) = cfg.revoke_url {
+            let revocation_url =
+                RevocationUrl::new(revoke_url.to_string()).expect("Invalid revocation endpoint URL");
+            inner = inner.set_revocation_uri(revocation_url);
+        }
+
+        Self {
+            inner,
+            scopes: array_str_to_vec(cfg.scopes),
+            login_hint_key: cfg.login_hint_key.map(|key| key.to_string()),
+            user_info_request: UserInfoRequest {
+                uri: cfg.user_info_uri.to_string(),
+                params: array_tuple_str_to_vec(cfg.user_info_params),
+                headers: array_tuple_u8_to_vec(cfg.user_info_headers),
+                deserializer: cfg.user_info_deserializer,
+            },
+        }
+    }
 }
 
-fn deserialize_google(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
-    parse_user_info::<GoogleUserInfo>(json_body, email)
+fn array_str_to_vec(a: &[&str]) -> Vec<String> {
+    a.iter().map(|&x| x.into()).collect()
 }
 
-fn deserialize_twitter(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
-    parse_user_info::<TwitterUserInfo>(json_body, email)
+fn array_tuple_str_to_vec(a: &[(&str, &str)]) -> Vec<(String, String)> {
+    a.iter().map(|&(k, v)| (k.into(), v.into())).collect()
 }
 
-fn deserialize_github(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
-    parse_user_info::<GithubUserInfo>(json_body, email)
+fn array_tuple_u8_to_vec(a: &[(&[u8], &str)]) -> Vec<(Vec<u8>, String)> {
+    a.iter().map(|&(k, v)| (k.into(), v.into())).collect()
 }
 
 /// Redirect URI must match exactly with registered.
@@ -161,7 +196,7 @@ fn build_client<'a>(provider: &'a str, redirect_uri: &'a str) -> Option<ScopedCl
             client_secret_env: Some("GITHUB_CLIENT_SECRET"),
             auth_url: "https://github.com/login/oauth/authorize",
             token_url: "https://github.com/login/oauth/access_token",
-            revoke_url: Some("https://api.twitter.com/2/oauth2/revoke"),
+            revoke_url: None,
             scopes: &["read:user"],
             login_hint_key: Some("login"),
             user_info_uri: "https://api.github.com/user",
@@ -172,63 +207,55 @@ fn build_client<'a>(provider: &'a str, redirect_uri: &'a str) -> Option<ScopedCl
             ],
             user_info_deserializer: deserialize_github,
         }),
+        "facebook" => Some(ClientConfig {
+            redirect_uri,
+            client_id_env: "FACEBOOK_CLIENT_ID",
+            client_secret_env: Some("FACEBOOK_CLIENT_SECRET"),
+            auth_url: "https://www.facebook.com/v13.0/dialog/oauth",
+            token_url: "https://graph.facebook.com/v13.0/oauth/access_token",
+            revoke_url: None,
+            scopes: &["public_profile", "email"],
+            login_hint_key: None,
+            user_info_uri: "https://graph.facebook.com/v13.0/me",
+            user_info_params: &[],
+            user_info_headers: &[(b"Accept", "application/json")],
+            user_info_deserializer: deserialize_facebook,
+        }),
         _ => None,
     }
-    .map(build_generic_oauth)
+    .map(|cfg| cfg.into())
 }
 
-fn build_generic_oauth(cfg: ClientConfig) -> ScopedClient {
-    let client_id = ClientId::new(
-        env::var(cfg.client_id_env)
-            .unwrap_or_else(|_| panic!("Missing the {} environment variable.", cfg.client_id_env))
-        );
-    let client_secret = cfg.client_secret_env.map(|secret_env| {
-        ClientSecret::new(
-            env::var(secret_env)
-                .unwrap_or_else(|_| panic!("Missing the {} environment variable.", secret_env))
-        )
-    });
-    let auth_url =
-        AuthUrl::new(cfg.auth_url.to_string()).expect("Invalid authorization endpoint URL");
-    let token_url = TokenUrl::new(cfg.token_url.to_string()).expect("Invalid token endpoint URL");
-
-    let mut inner = BasicClient::new(client_id, client_secret, auth_url, Some(token_url))
-        .set_redirect_uri(
-            RedirectUrl::new(cfg.redirect_uri.to_string()).expect("Invalid redirect URL"),
-        );
-
-    if let Some(revoke_url) = cfg.revoke_url {
-        let revocation_url =
-            RevocationUrl::new(revoke_url.to_string()).expect("Invalid revocation endpoint URL");
-        inner = inner.set_revocation_uri(revocation_url);
-    }
-
-    ScopedClient {
-        inner,
-        scopes: array_str_to_vec(cfg.scopes),
-        login_hint_key: cfg.login_hint_key.map(|key| key.to_string()),
-        user_info_request: UserInfoRequest {
-            uri: cfg.user_info_uri.to_string(),
-            params: array_tuple_str_to_vec(cfg.user_info_params),
-            headers: array_tuple_u8_to_vec(cfg.user_info_headers),
-            deserializer: cfg.user_info_deserializer,
-        },
-    }
+fn deserialize_google(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
+    parse_user_info::<GoogleUserInfo>(json_body, email)
 }
 
-fn array_str_to_vec(a: &[&str]) -> Vec<String> {
-    a.iter().map(|&x| x.into()).collect()
+fn deserialize_twitter(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
+    parse_user_info::<TwitterUserInfo>(json_body, email)
 }
 
-fn array_tuple_str_to_vec(a: &[(&str, &str)]) -> Vec<(String, String)> {
-    a.iter().map(|&(k, v)| (k.into(), v.into())).collect()
+fn deserialize_github(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
+    parse_user_info::<GithubUserInfo>(json_body, email)
 }
 
-fn array_tuple_u8_to_vec(a: &[(&[u8], &str)]) -> Vec<(Vec<u8>, String)> {
-    a.iter().map(|&(k, v)| (k.into(), v.into())).collect()
+fn deserialize_facebook(json_body: &str, email: &str) -> serde_json::Result<UserInfo> {
+    parse_user_info::<FacebookUserInfo>(json_body, email)
 }
 
-// Google `userinfo` endpoint
+fn parse_user_info<'de, T: Deserialize<'de> + Into<UserInfo>>(
+    json_body: &'de str,
+    email: &str,
+) -> serde_json::Result<UserInfo> {
+    serde_json::from_str::<'de, T>(json_body)
+        .map(|obj| obj.into())
+        .map(|info| UserInfo {
+            login_email: email.to_string(),
+            ..info
+        })
+}
+
+/// Google `userinfo` endpoint
+/// See https://any-api.com/googleapis_com/oauth2/docs/userinfo/oauth2_userinfo_get
 #[derive(Debug, Deserialize, Serialize)]
 struct GoogleUserInfo {
     sub: String,
@@ -247,14 +274,15 @@ impl From<GoogleUserInfo> for UserInfo {
             provider: "google",
             id: google.sub,
             name: google.name,
-            username: google.email.clone(),
+            username: Some(google.email.clone()),
             login_email: String::new(),
             provider_email: Some(google.email),
         }
     }
 }
 
-// Twitter `users/me` endpoint
+/// Twitter `users/me` endpoint
+/// See https://developer.twitter.com/en/docs/twitter-api/users/lookup/api-reference/get-users-me
 #[derive(Debug, Deserialize, Serialize)]
 struct TwitterUserInfo {
     id: String,
@@ -271,15 +299,15 @@ impl From<TwitterUserInfo> for UserInfo {
             provider: "twitter",
             id: twitter.id,
             name: twitter.name,
-            username: twitter.username,
-            login_email: String::new(),
+            username: Some(twitter.username),
             provider_email: None,
+            ..Default::default()
         }
     }
 }
 
-// Github `users` endpoint
-// https://docs.github.com/en/rest/reference/users#get-the-authenticated-user
+/// Github `users` endpoint
+/// See https://docs.github.com/en/rest/reference/users#get-the-authenticated-user
 #[derive(Debug, Deserialize, Serialize)]
 struct GithubUserInfo {
     id: i32,
@@ -296,9 +324,33 @@ impl From<GithubUserInfo> for UserInfo {
             provider: "github",
             id: github.id.to_string(),
             name: github.name,
-            username: github.login,
-            login_email: String::new(),
+            username: Some(github.login),
             provider_email: github.email,
+            ..Default::default()
+        }
+    }
+}
+
+/// Facebook `user` endpoint
+/// See https://developers.facebook.com/docs/graph-api/reference/v13.0/user
+#[derive(Debug, Deserialize, Serialize)]
+struct FacebookUserInfo {
+    id: String,
+    name: String,
+    email: Option<String>,
+    verified: bool,
+    link: url::Url,
+}
+
+impl From<FacebookUserInfo> for UserInfo {
+    fn from(facebook: FacebookUserInfo) -> Self {
+        UserInfo {
+            provider: "facebook",
+            id: facebook.id,
+            name: facebook.name,
+            username: None,
+            provider_email: facebook.email,
+            ..Default::default()
         }
     }
 }

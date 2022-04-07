@@ -110,7 +110,7 @@ fn validate_inputs(
 fn finalize_authentication(request: HttpRequest, user_info: UserInfo) -> Result<HttpResponse> {
     let form = LinkIdentityForm {
         provider: user_info.provider.to_string(),
-        username: user_info.username,
+        username: user_info.username.unwrap_or(user_info.id),
         name: TextField::new(user_info.name),
         email: EmailField::new(user_info.login_email),
     };
