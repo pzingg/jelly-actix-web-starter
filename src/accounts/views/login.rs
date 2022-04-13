@@ -1,5 +1,5 @@
 use jelly::actix_web::{web, HttpRequest};
-use jelly::forms::validation::{Validatable};
+use jelly::forms::validation::{Validatable, ValidationError, ValidationErrors};
 use jelly::prelude::*;
 use jelly::request::{Authentication, DatabasePool};
 use jelly::Result;
@@ -32,7 +32,9 @@ pub async fn authenticate(
     if let Err(errors) = form.validate() {
         return request.render(400, "accounts/login.html", {
             let mut context = Context::new();
-            context.insert("error", &errors);
+
+            // ValidationErrors object is serialized into HashMap here
+            context.insert("errors", &errors);
             context.insert("form", &form);
             context
         });
@@ -45,9 +47,15 @@ pub async fn authenticate(
         return request.redirect("/dashboard");
     }
 
+    // Create a ValidationErrors object
+    let errors: ValidationErrors<String> = ValidationError::new("form".to_owned(), "INVALID_CREDENTIALS")
+        .with_message(move |_| "password is incorrect".to_owned())
+        .into();
     request.render(400, "accounts/login.html", {
         let mut context = Context::new();
-        context.insert("error", "Invalid email or password.");
+
+        // ValidationErrors object is serialized into HashMap here
+        context.insert("errors", &errors);
         context.insert("form", &form);
         context
     })

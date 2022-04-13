@@ -6,6 +6,14 @@
 <h1>Login with password</h1>
 
 <form action="/accounts/login" method="POST" id="loginform">
+    {% if errors and errors is containing("form") %}
+    <p>
+    {% for e in errors["form"] %}
+        <span>{{ e["message"] }}</span>
+    {% endfor %}
+    </p>
+    {% endif %}
+
     <p>
         <label for="email">Email:</label>
         <input name="email" type="email" value="{{ form.email.value }}">

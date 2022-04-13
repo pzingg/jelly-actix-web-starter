@@ -123,14 +123,16 @@ Your template may use any of the environment variable starting with `JELLY_`.
 The `static` folder is where you can place any static things. In development, [actix-files]() is preconfigured to serve content from that directory, in order to make life easier for just running on your machine. This is disabled in the `production` build, mostly because we tend to shove this behind Nginx. You can swap this as needed.
 
 ## Forms
-Writing the same email/password/etc verification logic is a chore, and one of the nicer things Django has is Form helpers for this type of thing. If you miss that, Jelly has a forms-ish module that you can use.
+Writing the same email/password/etc verification logic is a chore, and one of the nicer things Django has is Form helpers for this type of thing. If you miss that, Jelly has a forms-ish module that you can use. The module supports validation via the `form-validation` crate's `Validatable`
+trait.
 
 For instance, you could do:
 
 **forms.rs**
 ``` rust
 use serde::{Deserialize, Serialize};
-use jelly::forms::{EmailField, PasswordField, Validation};
+use jelly::forms::{EmailField, PasswordField};
+use jelly::forms::validation::{concat_results, Validatable, ValidationErrors};
 
 #[derive(Default, Debug, Deserialize, Serialize)]
 pub struct LoginForm {
@@ -138,9 +140,26 @@ pub struct LoginForm {
     pub password: PasswordField
 }
 
-impl Validation for LoginForm {
-    fn is_valid(&mut self) -> bool {
-        self.email.is_valid() && !self.password.value.is_empty()
+// Implement validation for the form with the
+// `Validatable` trait from the form-validation crate
+impl Validatable<String> for MyForm {
+    fn validate(&self) -> Result<(), ValidationErrors<String>> {
+        concat_results(
+            vec![
+                self.email.validate(),
+                self.password.validate(),
+            ]
+        )
+    }
+}
+
+// Each field in the form needs to know its key when
+// its `validate(&self)` function is called.
+impl LoginForm {
+    pub fn set_keys(mut self) -> Self {
+        self.email = self.email.with_key("email");
+        self.password = self.password.with_key("password");
+        self
     }
 }
 ```
@@ -155,21 +174,36 @@ pub async fn authenticate(
     if request.is_authenticated()? {
         return request.redirect("/dashboard");
     }
+    // Make sure to call `set_keys()` before validating
+    let form = form.into_inner().set_keys();
 
-    let mut form = form.into_inner();
-    if !form.is_valid() {
+    // Validate the inputs from the form's fields.
+    // If no errors were produced, `form.validate()` will return `Ok(())`.
+    // Otherwise, `errors` will contain a ValidationErrors object, a
+    // `Vec` containing all the errors encountered:
+    if let Err(errors) = form.validate() {
         return request.render(400, "accounts/login.html", {
             let mut context = Context::new();
-            context.insert("error", "Invalid email or password.");
+
+            // ValidationErrors object is serialized into HashMap here
+            context.insert("errors", &errors);
             context.insert("form", &form);
             context
         });
     }
+
+    // No errors, form is valid, proceed with happy path...
 ```
 
-In this case, `EmailField` will check that the email is a mostly-valid email address. `PasswordField` will check that it's a "secure" password. Each `Field` type has an internal `errors` stack, so you can pass it back to your view and render errors as necessary.
+In this case, `EmailField` will check that the email is a mostly-valid email address. `PasswordField` will check that it's a "secure" password. The `validate` method
+will accumulate the validation errors for both fields, and the serialization
+that happens when you call `context.insert` will make them available to the
+view as a hash map, where the keys are the field names, and the values are
+arrays of maps of `key`, `message`, and `type_id` that can be used to render the
+error.
 
-For more supported field types, see the `jelly/forms` module.
+For more supported field types, and options for determining what is a "secure"
+password, see the `jelly/forms` module.
 
 ## Request Helpers
 A personal pet peeve: the default actix-web view definitions are mind-numbingly verbose. Code is read far more than it's written, and thus Jelly includes some choices to make writing views less of a headache: namely, access to things like database pools and authentication are implemented as traits on `HttpRequest`.
