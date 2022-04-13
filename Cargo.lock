@@ -991,6 +991,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
+name = "form-validation"
+version = "0.3.1"
+source = "git+https://github.com/pzingg/form-validation?branch=serialize#190e3cdc9f69debe5851bb0d8aa655e13b125249"
+dependencies = [
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "form_urlencoded"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1515,6 +1524,7 @@ dependencies = [
  "dotenv",
  "env_logger",
  "fancy-regex",
+ "form-validation",
  "futures",
  "hmac 0.11.0",
  "lazy_static",
@@ -3096,9 +3106,9 @@ dependencies = [
 
 [[package]]
 name = "validator"
-version = "0.11.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4effc922f18d14f3daf201b1d13c61e5ef62f5975e7d18df381f67badd76cfcd"
+checksum = "6d0f08911ab0fee2c5009580f04615fa868898ee57de10692a45da0c3bcc3e5e"
 dependencies = [
  "idna",
  "lazy_static",
@@ -3112,9 +3122,13 @@ dependencies = [
 
 [[package]]
 name = "validator_types"
-version = "0.11.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "add324da7950ac1f76b1c16ce8b5406147953d5d6a2ac1c5da93785f2cfc738b"
+checksum = "ded9d97e1d42327632f5f3bae6403c04886e2de3036261ef42deebd931a6a291"
+dependencies = [
+ "proc-macro2",
+ "syn",
+]
 
 [[package]]
 name = "version_check"

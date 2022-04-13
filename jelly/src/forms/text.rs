@@ -2,7 +2,8 @@ use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt;
 use std::ops::Deref;
 
-use super::Validation;
+use super::validation::{Validatable, Validation, ValidationErrors, Validator};
+use super::validators::{required_key, required_value};
 
 /// A generic field for validating that an input is not blank.
 /// In truth, if you don't want to easily check this, you could just use a
@@ -11,7 +12,7 @@ use super::Validation;
 #[derive(Debug, Default, Serialize)]
 pub struct TextField {
     pub value: String,
-    pub errors: Vec<String>,
+    pub key: String,
 }
 
 impl TextField {
@@ -21,6 +22,11 @@ impl TextField {
 
     pub fn new<S>(value: S) -> Self where S: Into<String> {
         Self::from_string(value.into())
+    }
+
+    pub fn with_key<S>(mut self, key: S) -> Self where S: Into<String> {
+        self.key = key.into();
+        self
     }
 }
 
@@ -51,13 +57,11 @@ impl Deref for TextField {
     }
 }
 
-impl Validation for TextField {
-    fn is_valid(&mut self) -> bool {
-        if self.value.is_empty() {
-            self.errors.push("Value cannot be blank.".to_string());
-            return false;
-        }
-
-        true
+impl Validatable<String> for TextField {
+    fn validate(&self) -> Result<(), ValidationErrors<String>> {
+        let v: Validator<String, String> = Validator::<String, String>::new()
+            .validation(required_key)
+            .validation(required_value);
+        v.validate_value(&self.value, &self.key)
     }
 }

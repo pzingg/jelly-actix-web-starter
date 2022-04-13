@@ -1,4 +1,5 @@
 use jelly::actix_web::{web, HttpRequest};
+use jelly::forms::validation::{Validatable};
 use jelly::prelude::*;
 use jelly::request::{Authentication, DatabasePool};
 use jelly::Result;
@@ -26,11 +27,12 @@ pub async fn create_account(
     if request.is_authenticated()? {
         return request.redirect("/dashboard");
     }
-
-    let mut form = form.into_inner();
-    if !form.is_valid() {
+    // Will use default password policy
+    let form = form.into_inner().set_keys();
+    if let Err(errors) = form.validate() {
         return request.render(400, "accounts/register.html", {
             let mut ctx = Context::new();
+            ctx.insert("errors", &errors);
             ctx.insert("form", &form);
             ctx
         });
@@ -57,5 +59,5 @@ pub async fn create_account(
     }
 
     // No matter what, just appear as if it worked.
-    request.redirect("/accounts/verify/")
+    request.redirect("/accounts/verify")
 }

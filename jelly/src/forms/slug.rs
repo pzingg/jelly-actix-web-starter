@@ -2,13 +2,14 @@ use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt;
 use std::ops::Deref;
 
-use super::Validation;
+use super::validation::{Validatable, Validation, ValidationError, ValidationErrors, Validator};
+use super::validators::{required_key, required_value};
 
 /// A field for validating that a URL slug is valid for a URL.
 #[derive(Debug, Default, Serialize)]
 pub struct SlugField {
     pub value: String,
-    pub errors: Vec<String>,
+    pub key: String,
 }
 
 
@@ -19,6 +20,11 @@ impl SlugField {
 
     pub fn new<S>(value: S) -> Self where S: Into<String> {
         Self::from_string(value.into())
+    }
+
+    pub fn with_key<S>(mut self, key: S) -> Self where S: Into<String> {
+        self.key = key.into();
+        self
     }
 }
 
@@ -49,16 +55,21 @@ impl Deref for SlugField {
     }
 }
 
-impl Validation for SlugField {
-    fn is_valid(&mut self) -> bool {
-        if self.value.is_empty() {
-            self.errors.push("Slugs cannot be blank!".to_string());
-        }
-
-        if self.value.contains(' ') {
-            self.errors.push("Slugs can't contain spaces.".to_string());
-        }
-
-        self.errors.is_empty()
+impl Validatable<String> for SlugField {
+    fn validate(&self) -> Result<(), ValidationErrors<String>> {
+        let v: Validator<String, String> = Validator::<String, String>::new()
+            .validation(required_key)
+            .validation(required_value)
+            .validation(|value: &String, key: &String| {
+                if !value.contains(' ') {
+                    Ok(())
+                } else {
+                    Err(ValidationError::new(key.clone(), "INVALID_SLUG")
+                        .with_message(move |_|
+                            "slugs cannot contain spaces".to_owned())
+                        .into())
+                }
+            });
+        v.validate_value(&self.value, &self.key)
     }
 }

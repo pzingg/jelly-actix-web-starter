@@ -1,5 +1,6 @@
 use jelly::actix_web::web;
 use jelly::error::OAuthError;
+use jelly::forms::validation::{Validatable};
 use jelly::oauth;
 use jelly::prelude::*;
 use jelly::Result;
@@ -33,12 +34,11 @@ pub async fn authenticate(
     if request.is_authenticated()? {
         return request.redirect("/dashboard");
     }
-
-    let mut form = form.into_inner();
-    if !form.is_valid() {
+    let form = form.into_inner().set_keys();
+    if let Err(errors) = form.validate() {
         return request.render(400, "oauth/login.html", {
             let mut context = Context::new();
-            context.insert("error", "Invalid email.");
+            context.insert("errors", &errors);
             context.insert("form", &form);
             context
         });

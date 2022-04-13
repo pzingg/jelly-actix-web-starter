@@ -11,19 +11,23 @@
 </p>
 
 <form action="/oauth/confirm" method="POST" id="linkform">
-    {% if error %}
-    <ul>
-        <li>&#9432;&nbsp; {{ error }}</li>
-    </ul>
-    {% endif %}
-
     <p>
         <label for="name">Name:</label>
         <input name="name" type="text" value="{{ form.name.value }}">
+        {% if errors and errors is containing("name") %}
+        {% for e in errors["name"] %}
+            <span>{{ e["message"] }}</span>
+        {% endfor %}
+        {% endif %}
     </p>
     <p>
         <label for="email">Email:</label>
         <input name="email" type="email" value="{{ form.email.value }}">
+        {% if errors and errors is containing("email") %}
+        {% for e in errors["email"] %}
+            <span>{{ e["message"] }}</span>
+        {% endfor %}
+        {% endif %}
     </p>
 
     <input name="provider" type="hidden" value="{{ form.provider }}">

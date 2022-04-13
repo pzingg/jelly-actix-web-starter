@@ -11,10 +11,10 @@ opt-level = 3
 
 [dependencies]
 actix-files = { version = "0.6", optional = true }
+actix-rt = "2.7.0"
 actix-service = "2.0"
 actix-session = { version = "0.6.2", features = ["cookie-session"] }
 actix-web = "4.0.1"
-actix-rt = "2.7.0"
 anyhow = "1.0.56"
 async-trait = "0.1.24"
 background-jobs = "0.12.0"
@@ -26,9 +26,12 @@ dotenv = "0.15.0"
 # version determined by pretty_env_logger
 env_logger = { version = "0.7.1", default-features = false, features = ["termcolor", "atty", "humantime"] }
 fancy-regex = "0.8"
+# form-validation = "0.3.1"
+form-validation = { git = "https://github.com/pzingg/form-validation", branch = "serialize" }
 futures = "0.3"
 hmac = "0.11.0"
 lazy_static = "1.4.0"
+lettre = { version="0.10.0-rc.3", optional = true }
 log = "0.4"
 minreq = { version = "2.1.0", features = ["https", "json-using-serde"] }
 notify = { version = "4", optional = true }
@@ -42,21 +45,20 @@ sha2 = "0.9"
 sqlx = { version = "0.5.9", default-features = false, features = ["runtime-actix-rustls", "postgres"] }
 tera = "1.5"
 thiserror = "1.0.30"
-validator = "0.11"
-zxcvbn = "2.2.0"
-lettre = { version="0.10.0-rc.3", optional = true }
 uuid = "0.8"
+validator = "0.14.0"
+zxcvbn = "2.2.0"
 
 [features]
 default = [ ]
-email-smtp = ["lettre"]
 email-mock = []
 email-postmark = [ ]
 email-sendgrid = [ ]
+email-smtp = ["lettre"]
 oauth = ["oauth2"]
+production = ["actix-web/secure-cookies", "djangohashers/with_pbkdf2"]
 static = ["actix-files"]
 template_watcher = ["notify"]
-production = ["actix-web/secure-cookies", "djangohashers/with_pbkdf2"]
 
 [dev-dependencies]
 httpmock = "0.6.5"

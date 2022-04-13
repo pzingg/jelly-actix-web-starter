@@ -71,7 +71,7 @@ pub fn client_for(provider: &str) -> Option<ScopedClient> {
             let root_domain = env::var("JELLY_DOMAIN").expect("JELLY_DOMAIN not set!");
             // Important: the redirect_uri must have the trailing slash,
             // and it must be registered with the OAuth provider.
-            let redirect_uri = format!("{}/oauth/callback/", root_domain);
+            let redirect_uri = format!("{}/oauth/callback", root_domain);
             let client = build_client(provider, &redirect_uri);
             provider_map.insert(provider.to_string(), client);
         }
