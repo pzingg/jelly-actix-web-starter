@@ -1,7 +1,7 @@
 //! Implements a set of input types that can be used for Form handling. Mostly modeled after
 //! Django's Form class.
 //!
-//! Ex:
+//! Example:
 //!
 //! ```rust
 //! use jelly::forms::{EmailField, PasswordField};
@@ -36,7 +36,7 @@ mod email;
 pub use email::EmailField;
 
 mod password;
-pub use password::{PasswordPolicy, PasswordField};
+pub use password::{split_inputs, PasswordPolicy, PasswordField};
 
 mod slug;
 pub use slug::SlugField;

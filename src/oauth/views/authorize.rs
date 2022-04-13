@@ -45,6 +45,8 @@ pub async fn confirm_identity(
     if let Err(errors) = form.validate() {
         return request.render(400, "oauth/confirm.html", {
             let mut context = Context::new();
+
+            // ValidationErrors object is serialized into HashMap here
             context.insert("errors", &errors);
             context.insert("form", &form);
             context
@@ -67,11 +69,14 @@ pub async fn confirm_identity(
         return request.redirect("/dashboard");
     }
 
+    // Create a ValidationErrors object
     let errors: ValidationErrors<String> = ValidationError::new("email".to_owned(), "EMAIL_IS_OTHER_ACCOUNT")
         .with_message(move |_| "address is assigned to another account".to_owned())
         .into();
     request.render(400, "oauth/confirm.html", {
         let mut context = Context::new();
+
+        // ValidationErrors object is serialized into HashMap here
         context.insert("errors", &errors);
         context.insert("form", &form);
         context

@@ -27,6 +27,8 @@ pub async fn request_reset(request: HttpRequest, form: web::Form<EmailForm>) -> 
     if let Err(errors) = form.validate() {
         return request.render(400, "accounts/reset_password/index.html", {
             let mut context = Context::new();
+
+            // ValidationErrors object is serialized into HashMap here
             context.insert("errors", &errors);
             context.insert("form", &form);
             context.insert("sent", &false);
@@ -89,6 +91,8 @@ pub async fn reset(
             if let Err(errors) = form.validate() {
                 return request.render(200, "accounts/reset_password/change_password.html", {
                     let mut context = Context::new();
+
+                    // ValidationErrors object is serialized into HashMap here
                     context.insert("errors", &errors);
                     context.insert("form", &form);
                     context

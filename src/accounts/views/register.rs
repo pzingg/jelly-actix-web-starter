@@ -31,10 +31,12 @@ pub async fn create_account(
     let form = form.into_inner().set_keys();
     if let Err(errors) = form.validate() {
         return request.render(400, "accounts/register.html", {
-            let mut ctx = Context::new();
-            ctx.insert("errors", &errors);
-            ctx.insert("form", &form);
-            ctx
+            let mut context = Context::new();
+
+            // ValidationErrors object is serialized into HashMap here
+            context.insert("errors", &errors);
+            context.insert("form", &form);
+            context
         });
     }
 

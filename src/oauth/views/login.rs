@@ -38,6 +38,8 @@ pub async fn authenticate(
     if let Err(errors) = form.validate() {
         return request.render(400, "oauth/login.html", {
             let mut context = Context::new();
+
+            // ValidationErrors object is serialized into HashMap here
             context.insert("errors", &errors);
             context.insert("form", &form);
             context
