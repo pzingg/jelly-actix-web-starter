@@ -10,7 +10,7 @@ pub use super::{
 
     // A trait used for calling validate() on form field types. Your form(s) can also implement
     // this, so it's exported here for ease of use.
-    forms::Validation,
+    //forms::validations::Validatable,
 
     // A string that is stored as jsonb in the database, keyed for locales.
     //i18n::{I18nString},

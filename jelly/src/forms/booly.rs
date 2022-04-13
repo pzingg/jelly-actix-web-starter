@@ -2,7 +2,8 @@ use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt;
 use std::ops::Deref;
 
-use super::Validation;
+use super::validation::{Validatable, Validation, ValidationErrors, Validator};
+use super::validators::required_key;
 
 /// A simple BoolField.
 ///
@@ -11,17 +12,18 @@ use super::Validation;
 #[derive(Debug, Default, Serialize)]
 pub struct BoolField {
     pub value: bool,
-    pub errors: Vec<String>,
+    pub key: String,
 }
 
 impl BoolField {
     pub fn new(value: bool) -> Self {
         Self { value, ..Self::default() }
     }
-}
 
-impl From<bool> for BoolField {
-    fn from(value: bool) -> Self { Self::new(value) }
+    pub fn with_key<S>(mut self, key: S) -> Self where S: Into<String> {
+        self.key = key.into();
+        self
+    }
 }
 
 impl fmt::Display for BoolField {
@@ -47,6 +49,10 @@ impl Deref for BoolField {
     }
 }
 
-impl Validation for BoolField {
-    fn is_valid(&mut self) -> bool { true }
+impl Validatable<String> for BoolField {
+    fn validate(&self) -> Result<(), ValidationErrors<String>> {
+        let v: Validator<bool, String> = Validator::<bool, String>::new()
+            .validation(required_key);
+        v.validate_value(&self.value, &self.key)
+    }
 }

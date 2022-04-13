@@ -1,17 +1,18 @@
 use std::fmt;
 use std::ops::Deref;
 
-use super::Validation;
 use chrono::NaiveDate;
-use log::error;
 use serde::{Deserialize, Deserializer};
+
+use super::validation::{Validatable, Validation, ValidationError, ValidationErrors, Validator};
+use super::validators::required_key;
 
 /// A field for accepting and validating a date string.
 #[derive(Debug, Default)]
 pub struct DateField {
     pub value: String,
     pub date: Option<chrono::NaiveDate>,
-    pub errors: Vec<String>,
+    pub key: String,
 }
 
 impl DateField {
@@ -21,6 +22,16 @@ impl DateField {
 
     pub fn new<S>(value: S) -> Self where S: Into<String> {
         Self::from_string(value.into())
+    }
+
+    pub fn with_key<S>(mut self, key: S) -> Self where S: Into<String> {
+        self.key = key.into();
+        self
+    }
+
+    pub fn with_date(mut self) -> Self {
+        self.date = NaiveDate::parse_from_str(&self.value, "%m/%d/%Y").ok();
+        self
     }
 }
 
@@ -51,19 +62,20 @@ impl Deref for DateField {
     }
 }
 
-impl Validation for DateField {
-    fn is_valid(&mut self) -> bool {
-        match NaiveDate::parse_from_str(&self.value, "%m/%d/%Y") {
-            Ok(date) => {
-                self.date = Some(date);
-                true
-            }
-
-            Err(e) => {
-                error!("Error parsing DateField: {}", e);
-                self.errors.push("Invalid date format.".to_string());
-                false
-            }
-        }
+impl Validatable<String> for DateField {
+    fn validate(&self) -> Result<(), ValidationErrors<String>> {
+        let v: Validator<String, String> = Validator::<String, String>::new()
+            .validation(required_key)
+            .validation(|value: &String, key: &String| {
+                match NaiveDate::parse_from_str(&value, "%m/%d/%Y") {
+                    Ok(_date) => Ok(()),
+                    Err(_) => {
+                        Err(ValidationError::new(key.clone(), "INVALID_DATE")
+                        .with_message(|_| "not a valid date: {}".to_owned())
+                        .into())
+                    },
+                }
+            });
+        v.validate_value(&self.value, &self.key)
     }
 }

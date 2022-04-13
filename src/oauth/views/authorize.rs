@@ -1,10 +1,11 @@
+use jelly::{oauth, Result, SESSION_OAUTH_FLOW, SESSION_OAUTH_TOKEN};
 use jelly::actix_session::Session;
 use jelly::actix_web::web;
 use jelly::error::OAuthError;
 use jelly::forms::{EmailField, TextField};
+use jelly::forms::validation::{Validatable, ValidationError, ValidationErrors};
 use jelly::oauth::{ClientFlow, OAuthFlow, UserInfo};
 use jelly::prelude::*;
-use jelly::{oauth, Result, SESSION_OAUTH_FLOW, SESSION_OAUTH_TOKEN};
 use serde::{Deserialize, Serialize};
 use std::{result, str};
 
@@ -40,12 +41,13 @@ pub async fn confirm_identity(
     request: HttpRequest,
     form: web::Form<LinkIdentityForm>,
 ) -> Result<HttpResponse> {
-    let mut form = form.into_inner();
-
-    if !form.is_valid() {
+    let form = form.into_inner().set_keys();
+    if let Err(errors) = form.validate() {
         return request.render(400, "oauth/confirm.html", {
             let mut context = Context::new();
-            context.insert("error", "Invalid email.");
+
+            // ValidationErrors object is serialized into HashMap here
+            context.insert("errors", &errors);
             context.insert("form", &form);
             context
         });
@@ -67,9 +69,15 @@ pub async fn confirm_identity(
         return request.redirect("/dashboard");
     }
 
+    // Create a ValidationErrors object
+    let errors: ValidationErrors<String> = ValidationError::new("email".to_owned(), "EMAIL_IS_OTHER_ACCOUNT")
+        .with_message(move |_| "address is assigned to another account".to_owned())
+        .into();
     request.render(400, "oauth/confirm.html", {
         let mut context = Context::new();
-        context.insert("error", "Invalid email.");
+
+        // ValidationErrors object is serialized into HashMap here
+        context.insert("errors", &errors);
         context.insert("form", &form);
         context
     })

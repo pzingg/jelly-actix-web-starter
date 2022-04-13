@@ -15,16 +15,15 @@
 </p>
 
 <form action="/oauth/login" method="POST" id="loginform">
-    {% if error %}
-    <ul>
-        <li>&#9432;&nbsp; {{ error }}</li>
-    </ul>
-    {% endif %}
-
     {% if form.email_hint %}
     <p>
         <label for="email">Email:</label>
         <input name="email" type="email" value="{{ form.email.value }}">
+        {% if errors and errors is containing("email") %}
+        {% for e in errors["email"] %}
+            <span>{{ e["message"] }}</span>
+        {% endfor %}
+        {% endif %}
     </p>
     {% else %}
     <input name="email" type="hidden" value="">

@@ -1,4 +1,5 @@
-use jelly::forms::{EmailField, TextField, Validation};
+use jelly::forms::{EmailField, TextField};
+use jelly::forms::validation::{concat_results, Validatable, ValidationErrors};
 use jelly::oauth;
 use serde::{Deserialize, Serialize};
 
@@ -14,12 +15,6 @@ pub struct OAuthLoginForm {
     pub email: EmailField,
 }
 
-impl Validation for OAuthLoginForm {
-    fn is_valid(&mut self) -> bool {
-        !self.email_hint || self.email.is_valid()
-    }
-}
-
 impl OAuthLoginForm {
     pub fn new(provider: &str) -> Self {
         let provider = if oauth::client::valid_provider(provider) {
@@ -27,11 +22,27 @@ impl OAuthLoginForm {
         } else {
             oauth::client::DEFAULT_PROVIDER
         };
+
         let hints = oauth::client::provider_hints(provider);
         OAuthLoginForm {
             provider: provider.to_string(),
             email_hint: hints.map_or(false, |hint| hint.uses_email_hint),
-            email: EmailField::default()
+            ..OAuthLoginForm::default()
+        }
+    }
+
+    pub fn set_keys(mut self) -> Self {
+        self.email = self.email.with_key("email");
+        self
+    }
+}
+
+impl Validatable<String> for OAuthLoginForm {
+    fn validate(&self) -> Result<(), ValidationErrors<String>> {
+        if self.email_hint {
+            self.email.validate()
+        } else {
+            Ok(())
         }
     }
 }
@@ -44,8 +55,16 @@ pub struct LinkIdentityForm {
     pub email: EmailField,
 }
 
-impl Validation for LinkIdentityForm {
-    fn is_valid(&mut self) -> bool {
-        self.email.is_valid()
+impl LinkIdentityForm {
+    pub fn set_keys(mut self) -> Self {
+        self.name = self.name.with_key("name");
+        self.email = self.email.with_key("email");
+        self
+    }
+}
+
+impl Validatable<String> for LinkIdentityForm {
+    fn validate(&self) -> Result<(), ValidationErrors<String>> {
+        concat_results(vec![self.email.validate(), self.name.validate()])
     }
 }

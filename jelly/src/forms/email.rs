@@ -3,14 +3,15 @@ use std::fmt;
 use std::ops::Deref;
 use validator::validate_email;
 
-use super::Validation;
+use super::validation::{Validatable, Validation, ValidationError, ValidationErrors, Validator};
+use super::validators::{required_key, required_value};
 
 /// A field for validating that an email address is a valid address.
 /// Mostly follows Django semantics.
 #[derive(Debug, Default, Serialize)]
 pub struct EmailField {
     pub value: String,
-    pub errors: Vec<String>,
+    pub key: String,
 }
 
 impl EmailField {
@@ -20,6 +21,11 @@ impl EmailField {
 
     pub fn new<S>(value: S) -> Self where S: Into<String> {
         Self::from_string(value.into())
+    }
+
+    pub fn with_key<S>(mut self, key: S) -> Self where S: Into<String> {
+        self.key = key.into();
+        self
     }
 }
 
@@ -50,19 +56,20 @@ impl Deref for EmailField {
     }
 }
 
-impl Validation for EmailField {
-    fn is_valid(&mut self) -> bool {
-        if self.value.is_empty() {
-            self.errors
-                .push("Email address cannot be blank.".to_string());
-            return false;
-        }
-
-        if !validate_email(&self.value) {
-            self.errors.push("Invalid email format.".to_string());
-            return false;
-        }
-
-        true
+impl Validatable<String> for EmailField {
+    fn validate(&self) -> Result<(), ValidationErrors<String>> {
+        let v: Validator<String, String> = Validator::<String, String>::new()
+            .validation(required_key)
+            .validation(required_value)
+            .validation(|value: &String, key: &String| {
+                if validate_email(value) {
+                    Ok(())
+                } else {
+                    Err(ValidationError::new(key.clone(), "INVALID_EMAIL")
+                        .with_message(|_| "not a valid email address".to_owned())
+                        .into())
+                }
+            });
+        v.validate_value(&self.value, &self.key)
     }
 }

@@ -5,37 +5,32 @@
 {% block content %}
 <h1>Sign Up</h1>
 
-{% if error %}
-<ul>
-    <li>&#9432;&nbsp; {{ error }}</li>
-</ul>
-{% endif %}
-
 <form action="/accounts/register" method="POST">
     <p>
         <label for="name">Your Name:</label>
         <input type="text" name="name" value="{{ form.name.value }}">
-        {% if form.name.errors | length > 0 %}
-            {{ form.name.errors }}
+        {% if errors and errors is containing("name") %}
+        {% for e in errors["name"] %}
+            <span>{{ e["message"] }}</span>
+        {% endfor %}
         {% endif %}
     </p>
-
     <p>
         <label for="email">Email:</label>
         <input name="email" type="email" value="{{ form.email.value }}">
-        {% if form.email.errors | length > 0 %}
-            {{ form.email.errors }}
+        {% if errors and errors is containing("email") %}
+        {% for e in errors["email"] %}
+            <span>{{ e["message"] }}</span>
+        {% endfor %}
         {% endif %}
     </p>
-
     <p>
         <label for="password">Password:</label>
         <input name="password" type="password">
-        {% if form.password.errors | length > 0 %}
-            {{ form.password.errors }}
-        {% endif %}
-        {% if form.password.hints | length > 0 %}
-            {{ form.password.hints }}
+        {% if errors and errors is containing("password") %}
+        {% for e in errors["password"] %}
+            <span>{{ e["message"] }}</span>
+        {% endfor %}
         {% endif %}
     </p>
 

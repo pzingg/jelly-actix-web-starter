@@ -1,4 +1,5 @@
 use jelly::actix_web::{web, HttpRequest};
+use jelly::forms::validation::{Validatable};
 use jelly::prelude::*;
 use jelly::request::{Authentication, DatabasePool};
 use jelly::Result;
@@ -27,12 +28,11 @@ pub async fn authenticate(
     if request.is_authenticated()? {
         return request.redirect("/dashboard");
     }
-
-    let mut form = form.into_inner();
-    if !form.is_valid() {
+    let form = form.into_inner().set_keys();
+    if let Err(errors) = form.validate() {
         return request.render(400, "accounts/login.html", {
             let mut context = Context::new();
-            context.insert("error", "Invalid email or password.");
+            context.insert("error", &errors);
             context.insert("form", &form);
             context
         });
